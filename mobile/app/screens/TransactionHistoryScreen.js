@@ -2,7 +2,10 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import theme from '../theme';
+import { fc, fundiCardShadow } from '../fundiTheme';
 import ScreenWrapper from '../components/ScreenWrapper';
+import FundiThemedScreen from '../components/FundiThemedScreen';
+import EmptyState from '../components/EmptyState';
 import { getTransactions } from '../../services/walletApi';
 import { useLanguage } from '../i18n/LanguageContext';
 
@@ -13,7 +16,8 @@ const TX_TABS = [
   { key: 'payment', label: 'Payments' },
 ];
 
-export default function TransactionHistoryScreen({ onNavigate }) {
+export default function TransactionHistoryScreen({ onNavigate, userRole = 'customer' }) {
+  const isFundi = userRole === 'fundi';
   const { t } = useLanguage();
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -104,9 +108,9 @@ export default function TransactionHistoryScreen({ onNavigate }) {
 
   const isCredit = (type) => ['deposit', 'payment_received', 'refund', 'transfer_in'].includes(type);
 
-  return (
-    <ScreenWrapper style={styles.safe}>
-      <View style={styles.container}>
+  const content = (
+    <View style={[styles.container, isFundi && styles.containerFundi]}>
+      {!isFundi ? (
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => onNavigate?.('wallet')}>
             <Ionicons name="chevron-back" size={22} color={theme.colors.white} />
@@ -114,61 +118,87 @@ export default function TransactionHistoryScreen({ onNavigate }) {
           <Text style={styles.title}>{t('Transaction History')}</Text>
           <View style={{ width: 40 }} />
         </View>
+      ) : null}
 
-        <View style={styles.tabRow}>
-          {TX_TABS.map((tabItem) => (
-            <TouchableOpacity key={tabItem.key} style={[styles.tab, tab === tabItem.key && styles.tabOn]} onPress={() => setTab(tabItem.key)}>
-              <Text style={[styles.tabText, tab === tabItem.key && styles.tabTextOn]}>{t(tabItem.label)}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.accent} />}
-          onMomentumScrollEnd={({ nativeEvent }) => {
-            const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
-            if (layoutMeasurement.height + contentOffset.y >= contentSize.height - 40) {
-              loadMore();
-            }
-          }}
-        >
-          {loading && transactions.length === 0 ? (
-            <View style={styles.loadingWrap}>
-              <ActivityIndicator color={theme.colors.accent} size="large" />
-            </View>
-          ) : transactions.length === 0 ? (
-            <View style={styles.emptyTx}>
-              <Ionicons name="receipt-outline" size={48} color={theme.colors.mutedDark} />
-              <Text style={styles.emptyTxText}>{t('No transactions found')}</Text>
-            </View>
-          ) : (
-            transactions.map((tx) => (
-              <View key={tx._id} style={styles.txRow}>
-                <View style={[styles.txIcon, { backgroundColor: txColor(tx.type) + '20' }]}>
-                  <Ionicons name={txIcon(tx.type)} size={20} color={txColor(tx.type)} />
-                </View>
-                <View style={styles.txInfo}>
-                  <Text style={styles.txType}>{t(txLabel(tx.type))}</Text>
-                  <Text style={styles.txDesc} numberOfLines={1}>{tx.description}</Text>
-                  <Text style={styles.txDate}>{t(formatDate(tx.createdAt))}{tx.reference ? ` · ${tx.reference}` : ''}</Text>
-                </View>
-                <View style={styles.txAmount}>
-                  <Text style={[styles.txValue, { color: txColor(tx.type) }]}>
-                    {isCredit(tx.type) ? '+' : '-'}UGX {(tx.amount || 0).toLocaleString()}
-                  </Text>
-                  <Text style={styles.txBalance}>{t('Bal: UGX {{amount}}', { amount: (tx.balanceAfter || 0).toLocaleString() })}</Text>
-                </View>
-              </View>
-            ))
-          )}
-          {page < totalPages && transactions.length > 0 && (
-            <View style={styles.loadMore}>
-              <ActivityIndicator color={theme.colors.accent} size="small" />
-            </View>
-          )}
-        </ScrollView>
+      <View style={styles.tabRow}>
+        {TX_TABS.map((tabItem) => (
+          <TouchableOpacity
+            key={tabItem.key}
+            style={[styles.tab, isFundi && styles.fundiTab, tab === tabItem.key && styles.tabOn, tab === tabItem.key && isFundi && styles.fundiTabOn]}
+            onPress={() => setTab(tabItem.key)}
+          >
+            <Text style={[styles.tabText, isFundi && styles.fundiTabText, tab === tabItem.key && styles.tabTextOn]}>{t(tabItem.label)}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.accent} />}
+        onMomentumScrollEnd={({ nativeEvent }) => {
+          const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+          if (layoutMeasurement.height + contentOffset.y >= contentSize.height - 40) {
+            loadMore();
+          }
+        }}
+      >
+        {loading && transactions.length === 0 ? (
+          <View style={styles.loadingWrap}>
+            <ActivityIndicator color={theme.colors.accent} size="large" />
+          </View>
+        ) : transactions.length === 0 ? (
+          <View style={styles.emptyTx}>
+            <EmptyState
+              variant={isFundi ? 'fundi' : 'dark'}
+              icon="receipt-outline"
+              title={t('No transactions found')}
+            />
+          </View>
+        ) : (
+          transactions.map((tx) => (
+            <View key={tx._id} style={[styles.txRow, isFundi && styles.fundiTxRow]}>
+              <View style={[styles.txIcon, { backgroundColor: txColor(tx.type) + '20' }]}>
+                <Ionicons name={txIcon(tx.type)} size={20} color={txColor(tx.type)} />
+              </View>
+              <View style={styles.txInfo}>
+                <Text style={[styles.txType, isFundi && styles.fundiText]}>{t(txLabel(tx.type))}</Text>
+                <Text style={[styles.txDesc, isFundi && styles.fundiTextMuted]} numberOfLines={1}>{tx.description}</Text>
+                <Text style={[styles.txDate, isFundi && styles.fundiTextSubtle]}>{t(formatDate(tx.createdAt))}{tx.reference ? ` · ${tx.reference}` : ''}</Text>
+              </View>
+              <View style={styles.txAmount}>
+                <Text style={[styles.txValue, { color: txColor(tx.type) }]}>
+                  {isCredit(tx.type) ? '+' : '-'}UGX {(tx.amount || 0).toLocaleString()}
+                </Text>
+                <Text style={[styles.txBalance, isFundi && styles.fundiTextSubtle]}>{t('Bal: UGX {{amount}}', { amount: (tx.balanceAfter || 0).toLocaleString() })}</Text>
+              </View>
+            </View>
+          ))
+        )}
+        {page < totalPages && transactions.length > 0 && (
+          <View style={styles.loadMore}>
+            <ActivityIndicator color={theme.colors.accent} size="small" />
+          </View>
+        )}
+      </ScrollView>
+    </View>
+  );
+
+  if (isFundi) {
+    return (
+      <FundiThemedScreen
+        title={t('Transaction History')}
+        onBack={() => onNavigate?.('wallet')}
+        scroll={false}
+        contentStyle={{ paddingTop: 8, flex: 1 }}
+      >
+        {content}
+      </FundiThemedScreen>
+    );
+  }
+
+  return (
+    <ScreenWrapper style={styles.safe}>
+      {content}
     </ScreenWrapper>
   );
 }
@@ -200,4 +230,23 @@ const styles = StyleSheet.create({
   txValue: { fontWeight: '900', fontSize: 14 },
   txBalance: { color: theme.colors.mutedDark, fontSize: 10, marginTop: 2 },
   loadMore: { paddingVertical: 20, alignItems: 'center' },
+
+  containerFundi: { backgroundColor: fc.page },
+  fundiText: { color: fc.text },
+  fundiTextMuted: { color: fc.textMuted },
+  fundiTextSubtle: { color: fc.textSubtle },
+  fundiTab: { backgroundColor: fc.card, borderColor: fc.border },
+  fundiTabOn: { backgroundColor: fc.accent, borderColor: fc.accent },
+  fundiTabText: { color: fc.textMuted },
+  fundiTxRow: {
+    backgroundColor: fc.card,
+    borderBottomColor: fc.border,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    borderRadius: 14,
+    borderBottomWidth: 0,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    ...fundiCardShadow,
+  },
 });

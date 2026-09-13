@@ -16,6 +16,7 @@ export default function ScrollScreen({
   contentStyle,
   keyboard = false,
   bottomPad = 24,
+  variant,
 }) {
   const body = (
     <ScrollView
@@ -33,7 +34,7 @@ export default function ScrollScreen({
   );
 
   return (
-    <ScreenWrapper style={[styles.safe, style]}>
+    <ScreenWrapper style={[styles.safe, style]} variant={variant}>
       {keyboard ? (
         <KeyboardAvoidingView
           style={styles.flex}

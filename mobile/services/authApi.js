@@ -22,6 +22,12 @@ export const verifyOtpRegister = (payload) =>
 export const verifyOtpLogin = (phone, code) =>
   api.post('/auth/otp/verify-login', { phone: normalizeUgandaPhone(phone), code });
 
+export const sendGoogleEmailLoginOtp = (idToken) =>
+  api.post('/auth/email-otp/google/send', { idToken });
+
+export const verifyEmailLoginOtp = (email, code) =>
+  api.post('/auth/email-otp/verify-login', { email: String(email || '').trim().toLowerCase(), code });
+
 export const selectRole = (role, userId) =>
   api.post('/auth/select-role', { role, userId });
 

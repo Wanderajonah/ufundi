@@ -13,17 +13,16 @@ import AuthHeader from '../components/AuthHeader';
 import AuthButton from '../components/AuthButton';
 import PhoneInput from '../components/PhoneInput';
 import theme from '../theme';
-import { getErrorMessage, handleGoogleSignInResponse } from '../../services/authApi';
-import { useGoogleSignIn } from '../../services/googleSignIn';
+import { getErrorMessage } from '../../services/authApi';
+import { isExpoGo, mapGoogleSignInError, useGoogleSignIn } from '../../services/googleSignIn';
 import { useLanguage } from '../i18n/LanguageContext';
 
 export default function SignInScreen({
   role = 'client',
   onBack,
   onPhoneOtp,
-  onLoggedIn,
   onCreateAccount,
-  onGoogleNewUser,
+  onGoogleEmailOtp,
 }) {
   const [phone, setPhone] = useState('');
   const [phoneFocused, setPhoneFocused] = useState(false);
@@ -31,44 +30,36 @@ export default function SignInScreen({
   const [otpSending, setOtpSending] = useState(false);
   const { t } = useLanguage();
 
-  const { promptAsync, disabled: googleDisabled } = useGoogleSignIn();
+  const { signIn, disabled: googleDisabled } = useGoogleSignIn();
 
   const isFundi = role === 'fundi';
 
   const handleGoogle = async () => {
+    if (isExpoGo) {
+      Alert.alert(
+        t('Dev build required'),
+        t('Google sign-in needs the FundiLink development or release build, not Expo Go.'),
+      );
+      return;
+    }
     setGoogleLoading(true);
     try {
-      const result = await promptAsync();
+      const result = await signIn();
       if (result?.type === 'success') {
-        // expo-auth-session returns idToken in authentication.idToken
-        // or in params.id_token depending on the provider version
-        const idToken = result.authentication?.idToken || result.params?.id_token;
+        const idToken = result.data?.idToken;
 
         if (!idToken) {
           Alert.alert(t('Sign in failed'), t('Could not get Google ID token. Please try again.'));
           return;
         }
 
-        const data = await handleGoogleSignInResponse(idToken);
-
-        const isNewUser = data?.isNewUser === true || !data?.user;
-
-        if (isNewUser) {
-          onGoogleNewUser?.({
-            role,
-            googleProfile: {
-              firstName: data?.user?.firstName,
-              lastName: data?.user?.lastName,
-              email: data?.user?.email,
-            },
-          });
-          return;
-        }
-
-        onLoggedIn?.(data);
+        await onGoogleEmailOtp?.({ idToken });
       }
     } catch (error) {
-      Alert.alert(t('Sign in failed'), getErrorMessage(error));
+      Alert.alert(
+        t('Sign in failed'),
+        error?.response ? getErrorMessage(error) : mapGoogleSignInError(error),
+      );
     } finally {
       setGoogleLoading(false);
     }
@@ -128,10 +119,16 @@ export default function SignInScreen({
 
       <AuthButton
         variant="google"
-        label={googleDisabled ? t('Google (not configured)') : t('Google')}
+        label={
+          googleDisabled
+            ? t('Google (not configured)')
+            : isExpoGo
+              ? t('Google (dev build only)')
+              : t('Google')
+        }
         onPress={handleGoogle}
         loading={googleLoading}
-        disabled={googleDisabled}
+        disabled={googleDisabled || isExpoGo}
       />
 
       <TouchableOpacity onPress={onCreateAccount} style={styles.createRow}>

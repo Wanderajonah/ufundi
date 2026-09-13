@@ -516,6 +516,13 @@ export const translations = {
 
     // --- Fundi dashboard / fundi screens ---
     'View All': 'Labba Byonna',
+    'Earnings today': 'Omugaso gw\'olwa leero',
+    'Jobs done': 'Emirimu egikoleddwa',
+    'Rating': 'Okubalanguwa',
+    'Earnings': 'Emigaso',
+    'Go online to start receiving requests.': 'Genda ku lusegere otandike okufuna okusaba.',
+    "You're currently offline": 'Kati oli ku bweru',
+    'Flip the switch above whenever you\'re ready to work.': 'Kyusa swiichi waggulu bw\'oba weetegefu okukola.',
     "You're online": 'Oli ku lusegere',
     "You're offline": 'Oli ku bweru',
     'Nearby clients can see you and send booking requests':

@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import theme from '../theme';
-import ScreenWrapper from '../components/ScreenWrapper';
+import { fc, fundiCardShadow } from '../fundiTheme';
+import FundiThemedScreen from '../components/FundiThemedScreen';
 import PrimaryButton from '../components/PrimaryButton';
 import BookingStatusSteps from '../components/BookingStatusSteps';
 import PriceNegotiationSection from '../components/PriceNegotiationSection';
@@ -24,7 +25,7 @@ import {
 } from '../../services/bookingsApi';
 import { emitSocket } from '../../services/socketService';
 import { useBooking } from '../../context/BookingContext';
-import { FUNDI_STATUS_ACTIONS, BOOKING_STATUS_LABELS } from '../utils/bookings';
+import { FUNDI_STATUS_ACTIONS, BOOKING_STATUS_LABELS, FUNDI_STATUS_TINT } from '../utils/bookings';
 import { formatUgx, initials } from '../utils/ratings';
 import { resolveMediaUrl } from '../../utils/image';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -195,7 +196,7 @@ export default function FundiBookingDetailScreen({ bookingId, onBack }) {
 
   if (!booking || booking.id !== bookingId) {
     return (
-      <ScreenWrapper style={styles.safe}>
+      <FundiThemedScreen title={t('Job Details')} onBack={onBack} scroll={false}>
         <View style={styles.center}>
           <ActivityIndicator color={theme.colors.accent} size="large" />
           <Text style={styles.loadingText}>{t('Loading booking…')}</Text>
@@ -205,7 +206,7 @@ export default function FundiBookingDetailScreen({ bookingId, onBack }) {
             </TouchableOpacity>
           ) : null}
         </View>
-      </ScreenWrapper>
+      </FundiThemedScreen>
     );
   }
 
@@ -223,17 +224,14 @@ export default function FundiBookingDetailScreen({ bookingId, onBack }) {
     return idx === currentIdx + 1 || (booking.status === 'ACCEPTED' && a.status === 'ON_THE_WAY');
   });
 
-  return (
-    <ScreenWrapper style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <TouchableOpacity onPress={onBack} style={styles.backRow}>
-          <Ionicons name="chevron-back" size={22} color={theme.colors.white} />
-          <Text style={styles.backText}>{t('Back')}</Text>
-        </TouchableOpacity>
+  const tint = FUNDI_STATUS_TINT[booking.status] || FUNDI_STATUS_TINT.PENDING;
 
+  return (
+    <FundiThemedScreen title={t('Job Details')} onBack={onBack}>
         <View style={styles.statusHeader}>
-          <View style={styles.statusPill}>
-            <Text style={styles.statusPillText}>{t(booking.statusLabel)}</Text>
+          <View style={[styles.statusPill, { backgroundColor: tint.bg }]}>
+            <View style={[styles.statusDot, { backgroundColor: tint.fg }]} />
+            <Text style={[styles.statusPillText, { color: tint.fg }]}>{t(booking.statusLabel)}</Text>
           </View>
         </View>
 
@@ -241,16 +239,24 @@ export default function FundiBookingDetailScreen({ bookingId, onBack }) {
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{initials(booking.clientName)}</Text>
           </View>
-          <View style={{ flex: 1 }}>
+          <View style={styles.clientMeta}>
             <Text style={styles.clientName}>{booking.clientName}</Text>
-            <Text style={styles.service}>{booking.service}</Text>
+            <View style={styles.serviceRow}>
+              <Ionicons name="construct-outline" size={13} color={theme.colors.green} />
+              <Text style={styles.service}>{booking.service}</Text>
+            </View>
+            {booking.address ? (
+              <View style={styles.addressRow}>
+                <Ionicons name="location-outline" size={13} color={fc.textSubtle} />
+                <Text style={styles.address} numberOfLines={2}>{booking.address}</Text>
+              </View>
+            ) : null}
           </View>
         </View>
 
         <View style={styles.panel}>
           <DetailRow icon="document-text-outline" label={t('Description')} value={booking.description} />
-          <DetailRow icon="location-outline" label={t('Location')} value={booking.address} />
-          <DetailRow icon="cash-outline" label={t('Amount')} value={booking.agreedPrice ? formatUgx(booking.agreedPrice) : null} />
+          <DetailRow icon="cash-outline" label={t('Agreed price')} value={booking.agreedPrice ? formatUgx(booking.agreedPrice) : t('Not set')} highlight={Boolean(booking.agreedPrice)} />
           {booking.distanceKm != null ? (
             <DetailRow icon="navigate-outline" label={t('Distance')} value={t('{{distance}} km', { distance: booking.distanceKm })} />
           ) : null}
@@ -323,69 +329,89 @@ export default function FundiBookingDetailScreen({ bookingId, onBack }) {
             <Text style={styles.cancelText}>{t('Cancel booking')}</Text>
           </TouchableOpacity>
         ) : null}
-      </ScrollView>
-    </ScreenWrapper>
+    </FundiThemedScreen>
   );
 }
 
-function DetailRow({ icon, label, value }) {
-  if (value == null) return null;
+function DetailRow({ icon, label, value, highlight = false }) {
+  if (value == null || value === '') return null;
   return (
     <View style={styles.detailRow}>
-      <Ionicons name={icon} size={18} color={theme.colors.accent} />
+      <View style={styles.detailIcon}>
+        <Ionicons name={icon} size={16} color={theme.colors.accentDark} />
+      </View>
       <View style={{ flex: 1 }}>
         <Text style={styles.detailLabel}>{label}</Text>
-        <Text style={styles.detailValue}>{value}</Text>
+        <Text style={[styles.detailValue, highlight && styles.detailValueAccent]}>{value}</Text>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: theme.colors.black },
-  container: { paddingHorizontal: 20, paddingBottom: 40 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
-  loadingText: { color: theme.colors.muted },
-  backRow: { flexDirection: 'row', alignItems: 'center', marginTop: 12, marginBottom: 16, gap: 4 },
-  backText: { color: theme.colors.muted, fontWeight: '800' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12, minHeight: 200 },
+  loadingText: { color: fc.textMuted },
   statusHeader: { alignItems: 'flex-start', marginBottom: 16 },
   statusPill: {
-    backgroundColor: 'rgba(255,184,0,0.15)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  statusPillText: { color: theme.colors.accent, fontWeight: '800', fontSize: 12 },
-  clientCard: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  statusDot: { width: 8, height: 8, borderRadius: 999 },
+  statusPillText: { fontWeight: '800', fontSize: 12 },
+  clientCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     gap: 12,
-    backgroundColor: theme.colors.input,
-    borderRadius: theme.radius.lg,
+    backgroundColor: fc.card,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: fc.border,
     padding: 16,
     marginBottom: 16,
+    ...fundiCardShadow,
   },
   avatar: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(255,184,0,0.25)',
+    backgroundColor: 'rgba(255,184,0,0.12)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  avatarText: { color: theme.colors.white, fontWeight: '900' },
-  clientName: { color: theme.colors.white, fontWeight: '900', fontSize: 16 },
-  service: { color: theme.colors.muted, marginTop: 2 },
+  avatarText: { color: fc.accentDark, fontWeight: '900' },
+  clientMeta: { flex: 1 },
+  clientName: { color: fc.text, fontWeight: '800', fontSize: 16 },
+  serviceRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 },
+  service: { color: theme.colors.green, fontSize: 13, fontWeight: '700' },
+  addressRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 5, marginTop: 4 },
+  address: { color: fc.textMuted, fontSize: 12, flex: 1, lineHeight: 16 },
   panel: {
-    backgroundColor: theme.colors.input,
-    borderRadius: theme.radius.lg,
+    backgroundColor: fc.card,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: fc.border,
     padding: 16,
-    gap: 12,
+    gap: 14,
+    marginBottom: 16,
+    ...fundiCardShadow,
   },
   detailRow: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
-  detailLabel: { color: theme.colors.muted, fontSize: 11, fontWeight: '700' },
-  detailValue: { color: theme.colors.white, fontSize: 14, marginTop: 2 },
-  sectionTitle: { color: theme.colors.white, fontWeight: '800', marginTop: 20, marginBottom: 10 },
+  detailIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: 'rgba(229,166,0,0.10)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  detailLabel: { color: fc.textMuted, fontSize: 11, fontWeight: '700' },
+  detailValue: { color: fc.text, fontSize: 14, marginTop: 2 },
+  detailValueAccent: { color: fc.accentDark, fontWeight: '800' },
+  sectionTitle: { color: fc.text, fontWeight: '800', marginTop: 20, marginBottom: 10 },
   statusBtn: { marginBottom: 10 },
   errorBox: {
     marginTop: 16,
@@ -409,7 +435,7 @@ const styles = StyleSheet.create({
   },
   cancelText: { color: theme.colors.red, fontWeight: '700' },
   photoSection: { marginTop: 16 },
-  photoLabel: { color: theme.colors.muted, fontSize: 11, fontWeight: '700', marginBottom: 8 },
+  photoLabel: { color: fc.textMuted, fontSize: 11, fontWeight: '700', marginBottom: 8 },
   photoRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   photoThumb: { width: 72, height: 72, borderRadius: 8 },
 });

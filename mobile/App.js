@@ -46,6 +46,8 @@ import {
   sendOtp,
   verifyOtpRegister,
   verifyOtpLogin,
+  sendGoogleEmailLoginOtp,
+  verifyEmailLoginOtp,
   selectRole,
   applyAuthSession,
   clearAuthSession,
@@ -54,6 +56,7 @@ import {
   normalizeUgandaPhone,
 } from "./services/authApi";
 import { setAuthToken as setApiAuthToken } from "./services/api";
+import { getProfile } from "./services/usersApi";
 import {
   createReview,
   updateReview,
@@ -107,6 +110,9 @@ function AppContent() {
   const [signupData, setSignupData] = useState(null);
   const [otpPurpose, setOtpPurpose] = useState("register");
   const [otpPhone, setOtpPhone] = useState("");
+  const [otpEmail, setOtpEmail] = useState("");
+  const [googleOtpToken, setGoogleOtpToken] = useState("");
+  const [otpChannel, setOtpChannel] = useState("phone");
   const [otpExpiresIn, setOtpExpiresIn] = useState(600);
   const [signupSubmitting, setSignupSubmitting] = useState(false);
   const [pendingUsers, setPendingUsers] = useState(null);
@@ -152,7 +158,20 @@ function AppContent() {
 
   // Switch a dual-role (fundi-enabled) user into fundi mode. The active role
   // must reflect the chosen view so tabs/dashboard/booking scoping are correct.
-  const switchToFundiMode = () => {
+  const verifyFundiActivation = async () => {
+    try {
+      const { data } = await getProfile();
+      return data?.fundiProfile?.verificationStatus === "verified";
+    } catch {
+      return false;
+    }
+  };
+
+  const switchToFundiMode = async () => {
+    if (!(await verifyFundiActivation())) {
+      setScreen("verification");
+      return;
+    }
     historyRef.current = [];
     setUserRole("fundi");
     setScreen("fundiDashboard");
@@ -228,7 +247,11 @@ function AppContent() {
         saved.location.lng,
         saved.locationLabel || undefined,
       );
-      goHome(role);
+      if (role === "fundi" && !(await verifyFundiActivation())) {
+        setScreen("verification");
+      } else {
+        goHome(role);
+      }
       return;
     }
     const locationOk = await ensureLocationForLogin();
@@ -240,7 +263,11 @@ function AppContent() {
       handleLogout();
       return;
     }
-    goHome(role);
+    if (role === "fundi" && !(await verifyFundiActivation())) {
+      setScreen("verification");
+    } else {
+      goHome(role);
+    }
   };
 
   const applySession = async (data) => {
@@ -425,6 +452,9 @@ function AppContent() {
   // Here we only ensure light (white) nav-bar buttons on the dark background.
   useEffect(() => {
     if (Platform.OS === "android") {
+      NavigationBar.setBackgroundColorAsync("#000000").catch(() => {
+        /* non-blocking */
+      });
       NavigationBar.setButtonStyleAsync("light").catch(() => {
         /* non-blocking */
       });
@@ -676,7 +706,11 @@ function AppContent() {
             if (session?.user) {
               const role = await applySession(session);
               setAuthTokenForSync(session.token);
-              goHome(role);
+              if (role === "fundi" && !(await verifyFundiActivation())) {
+                setScreen("verification");
+              } else {
+                goHome(role);
+              }
               return;
             }
           } catch {
@@ -806,21 +840,6 @@ function AppContent() {
         role={selectedRole}
         onBack={() => setScreen("onboarding")}
         onCreateAccount={() => setScreen("createAccountChoice")}
-        onGoogleNewUser={({ role, googleProfile }) => {
-          if (!role) {
-            setSelectedRole("");
-            setScreen("onboarding");
-            return;
-          }
-          setSelectedRole(role === "customer" ? "client" : role);
-          setGoogleNewUserProfile({
-            firstName: googleProfile?.firstName,
-            lastName: googleProfile?.lastName,
-            email: googleProfile?.email,
-          });
-          setGoogleNewUserOrigin("signin");
-          setScreen("createAccount");
-        }}
         onPhoneOtp={async ({ phone }) => {
           if (!selectedRole) {
             setScreen("onboarding");
@@ -828,6 +847,7 @@ function AppContent() {
           }
 
           try {
+            setOtpChannel("phone");
             setOtpPurpose("login");
             const normalized = normalizeUgandaPhone(phone);
             setOtpPhone(normalized);
@@ -840,9 +860,19 @@ function AppContent() {
             Alert.alert("Could not send OTP", getErrorMessage(error));
           }
         }}
-        onLoggedIn={async (data) => {
-          const role = await applySession(data);
-          await finishLogin(data, role);
+        onGoogleEmailOtp={async ({ idToken }) => {
+          try {
+            setOtpChannel("email");
+            setOtpPurpose("login");
+            setGoogleOtpToken(idToken);
+            const { data } = await sendGoogleEmailLoginOtp(idToken);
+            setOtpEmail(data.email);
+            setOtpExpiresIn(data.expiresIn || 600);
+            if (data.devCode) Alert.alert("Dev OTP", `Your code is: ${data.devCode}`);
+            setScreen("otp");
+          } catch (error) {
+            Alert.alert("Could not send email code", getErrorMessage(error));
+          }
         }}
       />
     );
@@ -853,32 +883,29 @@ function AppContent() {
       <FundiProfileSetupScreen
         authToken={authToken}
         onBack={() => setScreen("createAccount")}
-        onComplete={() => {
-          if (fundiEnabled) {
-            // Returning from Settings "Become a Fundi" — go to fundi dashboard
-            goHome("fundi");
-          } else {
-            setScreen("locationPermission");
-          }
-        }}
+        onComplete={() => setScreen("verification")}
       />
     );
   }
 
   if (screen === "otp") {
-    const displayPhone = otpPhone
+    const displayPhone = otpChannel === "email"
+      ? otpEmail
+      : otpPhone
       ? `+256 ${otpPhone.replace(/\D/g, "").replace(/^256/, "")}`
       : "+256";
     return (
       <OtpScreen
         phone={displayPhone}
-        phoneRaw={otpPhone}
+        phoneRaw={otpChannel === "email" ? otpEmail : otpPhone}
         purpose={otpPurpose}
+        channel={otpChannel}
         expiresIn={otpExpiresIn}
         onBack={() =>
           setScreen(otpPurpose === "login" ? "signIn" : "phoneRegister")
         }
         onResent={(data) => setOtpExpiresIn(data.expiresIn || 600)}
+        onRequestResend={otpChannel === "email" ? () => sendGoogleEmailLoginOtp(googleOtpToken) : undefined}
         onVerify={async (code) => {
           if (otpPurpose === "register") {
             const { data } = await verifyOtpRegister({
@@ -894,7 +921,9 @@ function AppContent() {
             await afterAuth(data);
             return;
           }
-          const { data } = await verifyOtpLogin(otpPhone, code);
+          const { data } = otpChannel === "email"
+            ? await verifyEmailLoginOtp(otpEmail, code)
+            : await verifyOtpLogin(otpPhone, code);
           if (data.requireRoleSelection) {
             setPendingUsers([data.user, data.token]);
             setScreen("rolePicker");
@@ -1003,11 +1032,11 @@ function AppContent() {
   }
 
   if (screen === "notifications") {
-    return bookingWrap(<NotificationsScreen onNavigate={handleNavigate} />);
+    return bookingWrap(<NotificationsScreen onNavigate={handleNavigate} userRole={userRole} />);
   }
 
   if (screen === "editProfile") {
-    return <EditProfileScreen onNavigate={handleNavigate} />;
+    return <EditProfileScreen onNavigate={handleNavigate} userRole={userRole} />;
   }
 
   if (screen === "skillsPortfolio") {
@@ -1018,6 +1047,7 @@ function AppContent() {
     return (
       <SettingsScreen
         onNavigate={handleNavigate}
+        userRole={userRole}
         fundiEnabled={fundiEnabled}
         onFundiEnabled={() => setFundiEnabled(true)}
       />
@@ -1025,11 +1055,11 @@ function AppContent() {
   }
 
   if (screen === "payments") {
-    return <PaymentMethodsScreen onNavigate={handleNavigate} />;
+    return <PaymentMethodsScreen onNavigate={handleNavigate} userRole={userRole} />;
   }
 
   if (screen === "help") {
-    return <HelpSupportScreen onNavigate={handleNavigate} />;
+    return <HelpSupportScreen onNavigate={handleNavigate} userRole={userRole} />;
   }
 
   if (screen === "verification") {
@@ -1037,23 +1067,23 @@ function AppContent() {
   }
 
   if (screen === "wallet") {
-    return tabLayout(<WalletHomeScreen onNavigate={handleNavigate} />, "wallet");
+    return tabLayout(<WalletHomeScreen onNavigate={handleNavigate} userRole={userRole} />, "wallet");
   }
 
   if (screen === "deposit") {
-    return <DepositScreen onNavigate={handleNavigate} />;
+    return <DepositScreen onNavigate={handleNavigate} userRole={userRole} />;
   }
 
   if (screen === "withdraw") {
-    return <WithdrawScreen onNavigate={handleNavigate} />;
+    return <WithdrawScreen onNavigate={handleNavigate} userRole={userRole} />;
   }
 
   if (screen === "transactionHistory") {
-    return <TransactionHistoryScreen onNavigate={handleNavigate} />;
+    return <TransactionHistoryScreen onNavigate={handleNavigate} userRole={userRole} />;
   }
 
   if (screen === "transfer") {
-    return <TransferScreen onNavigate={handleNavigate} />;
+    return <TransferScreen onNavigate={handleNavigate} userRole={userRole} />;
   }
 
   if (screen === "artisan") {

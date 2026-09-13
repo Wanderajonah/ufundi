@@ -38,6 +38,7 @@ fundlink/
    - Copy `backend/.env.example` to `backend/.env`
    - Add EgoSMS credentials (`COMMS_USERNAME`, `COMMS_API_KEY`, `COMMS_SENDER_ID`)
    - For local dev without SMS, set `COMMS_DEV_MODE=true` (OTP is printed in the server console)
+   - To enable email OTP login, create a [Resend](https://resend.com) API key and add `RESEND_API_KEY` plus `EMAIL_OTP_FROM` (for example, `FundiLink <login@your-verified-domain.com>`). Resend requires the sending domain to be verified.
 3. Install and run:
 
 ```bash
@@ -130,6 +131,8 @@ Use `mobile/.env` with your LAN IP for `EXPO_PUBLIC_API_URL` while the backend r
 - `POST /api/auth/otp/send` — send 6-digit OTP via EgoSMS (`phone`, `purpose`: `register` | `login`)
 - `POST /api/auth/otp/verify-register` — complete signup after OTP (`phone`, `code`, `name`, `role`, …)
 - `POST /api/auth/otp/verify-login` — login with OTP (`phone`, `code`)
+- `POST /api/auth/email-otp/google/send` — verify the selected Google account, then send a six-digit login code to that Google email
+- `POST /api/auth/email-otp/verify-login` — login with an email code (`email`, `code`)
 
 ### Maps & location
 - `GET /api/maps/geocode?address=...` — address → coordinates (Google Geocoding)

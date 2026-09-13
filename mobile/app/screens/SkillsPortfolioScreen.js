@@ -13,7 +13,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import theme from '../theme';
-import ScreenWrapper from '../components/ScreenWrapper';
+import { fc } from '../fundiTheme';
+import FundiThemedScreen from '../components/FundiThemedScreen';
 import { getProfile, uploadPortfolioImages, deletePortfolioImage } from '../../services/usersApi';
 import { resolveMediaUrl } from '../../utils/image';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -105,22 +106,18 @@ export default function SkillsPortfolioScreen({ onNavigate }) {
   };
 
   return (
-    <ScreenWrapper style={styles.safe} edges={['top', 'left', 'right']}>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => onNavigate?.('profile')} style={styles.backBtn}>
-            <Ionicons name="chevron-back" size={20} color={theme.colors.white} />
-          </TouchableOpacity>
-          <Text style={styles.title}>{t('Skills & Portfolio')}</Text>
-          <View style={{ width: 40 }} />
-        </View>
-
+    <FundiThemedScreen
+      title={t('Skills & Portfolio')}
+      onBack={() => onNavigate?.('profile')}
+      scroll={false}
+      contentStyle={{ paddingTop: 0 }}
+    >
         {loading ? (
           <View style={styles.loadingWrap}>
             <ActivityIndicator color={theme.colors.accent} size="large" />
           </View>
         ) : (
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
             <Text style={styles.sectionLabel}>{t('Skills')}</Text>
             {skills.length > 0 ? (
               <View style={styles.skillsRow}>
@@ -176,35 +173,30 @@ export default function SkillsPortfolioScreen({ onNavigate }) {
             )}
           </ScrollView>
         )}
-      </View>
-    </ScreenWrapper>
+    </FundiThemedScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: theme.colors.black },
-  container: { flex: 1, paddingHorizontal: 20, paddingTop: 12 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
-  backBtn: { width: 40, height: 40, borderRadius: 12, backgroundColor: theme.colors.input, borderWidth: 1, borderColor: theme.colors.border, justifyContent: 'center', alignItems: 'center' },
-  title: { color: theme.colors.white, fontSize: 20, fontWeight: '800' },
-  loadingWrap: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  scroll: { paddingBottom: 24 },
+  loadingWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', minHeight: 200 },
 
-  sectionLabel: { color: theme.colors.white, fontWeight: '800', fontSize: 15, marginBottom: 10 },
+  sectionLabel: { color: fc.text, fontWeight: '800', fontSize: 15, marginBottom: 10 },
   skillsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   skillChip: {
-    backgroundColor: theme.colors.accentDim,
+    backgroundColor: 'rgba(255,184,0,0.12)',
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: 'rgba(255,184,0,0.2)',
   },
-  skillText: { color: theme.colors.accent, fontWeight: '700', fontSize: 13 },
-  emptyText: { color: theme.colors.mutedDark, fontSize: 13, fontStyle: 'italic' },
+  skillText: { color: theme.colors.accentDark, fontWeight: '700', fontSize: 13 },
+  emptyText: { color: fc.textMuted, fontSize: 13, fontStyle: 'italic' },
 
-  divider: { height: 1, backgroundColor: theme.colors.border, marginVertical: 20 },
+  divider: { height: 1, backgroundColor: fc.border, marginVertical: 20 },
 
-  hint: { color: theme.colors.mutedDark, fontSize: 12, marginBottom: 14, marginTop: -4 },
+  hint: { color: fc.textMuted, fontSize: 12, marginBottom: 14, marginTop: -4 },
 
   uploadBtn: {
     flexDirection: 'row',
@@ -219,7 +211,7 @@ const styles = StyleSheet.create({
   uploadText: { color: theme.colors.textDark, fontWeight: '800', fontSize: 15 },
 
   emptyState: { alignItems: 'center', paddingVertical: 24, gap: 6 },
-  emptyTitle: { color: theme.colors.mutedDark, fontSize: 14, fontWeight: '600' },
+  emptyTitle: { color: fc.textMuted, fontSize: 14, fontWeight: '600' },
 
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: GAP },
   imgWrap: { width: IMG_SIZE, height: IMG_SIZE, borderRadius: 12, overflow: 'hidden' },

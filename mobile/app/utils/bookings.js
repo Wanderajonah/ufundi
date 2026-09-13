@@ -29,6 +29,17 @@ export const FUNDI_STATUS_ACTIONS = [
   { status: 'COMPLETED', label: 'Completed', icon: 'checkmark-circle-outline' },
 ];
 
+export const FUNDI_STATUS_TINT = {
+  PENDING: { bg: 'rgba(59,130,246,0.10)', fg: '#3B82F6' },
+  ACCEPTED: { bg: 'rgba(59,130,246,0.10)', fg: '#3B82F6' },
+  ON_THE_WAY: { bg: 'rgba(255,184,0,0.14)', fg: '#B45309' },
+  ARRIVED: { bg: 'rgba(139,92,246,0.12)', fg: '#7C3AED' },
+  IN_PROGRESS: { bg: 'rgba(34,197,94,0.12)', fg: '#16A34A' },
+  COMPLETED: { bg: 'rgba(34,197,94,0.12)', fg: '#16A34A' },
+  CANCELLED: { bg: 'rgba(239,68,68,0.12)', fg: '#DC2626' },
+  DISPUTED: { bg: 'rgba(239,68,68,0.12)', fg: '#DC2626' },
+};
+
 const CATEGORY_MAP = {
   plumber: 'Plumber',
   electrician: 'Electrician',

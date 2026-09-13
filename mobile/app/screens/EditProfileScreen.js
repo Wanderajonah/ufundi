@@ -17,7 +17,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as ImagePicker from "expo-image-picker";
 
 import theme from "../theme";
+import { fc, fundiCardShadow } from "../fundiTheme";
 import ScreenWrapper from "../components/ScreenWrapper";
+import FundiThemedScreen from "../components/FundiThemedScreen";
 import PrimaryButton from "../components/PrimaryButton";
 import {
   getProfile,
@@ -31,16 +33,17 @@ import { useLanguage } from "../i18n/LanguageContext";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function Field({ label, children }) {
+function Field({ label, children, light }) {
   return (
     <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, light && styles.labelFundi]}>{label}</Text>
       {children}
     </View>
   );
 }
 
-export default function EditProfileScreen({ onNavigate }) {
+export default function EditProfileScreen({ onNavigate, userRole = 'customer' }) {
+  const themed = userRole === 'fundi';
   const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -312,12 +315,14 @@ export default function EditProfileScreen({ onNavigate }) {
     }
   };
 
-  return (
-    <ScreenWrapper style={styles.safe} edges={["top", "left", "right"]}>
-      <ScrollView
-        contentContainerStyle={styles.container}
-        showsVerticalScrollIndicator={false}
-      >
+  const pageTitle = themed ? t("Edit Fundi Profile") : t("Edit Profile");
+
+  const content = (
+    <ScrollView
+      contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator={false}
+    >
+      {!themed ? (
         <View style={styles.headerRow}>
           <TouchableOpacity
             onPress={() => onNavigate?.("profile")}
@@ -325,192 +330,215 @@ export default function EditProfileScreen({ onNavigate }) {
           >
             <Ionicons name="chevron-back" size={20} color={theme.colors.white} />
           </TouchableOpacity>
-          <Text style={styles.title}>{t("Edit Profile")}</Text>
+          <Text style={styles.title}>{pageTitle}</Text>
           <View style={{ width: 40 }} />
         </View>
+      ) : null}
 
-        {saved ? (
-          <Animated.View
-            style={[
-              styles.savedToast,
-              {
-                opacity: savedAnim,
-                transform: [
-                  {
-                    translateY: savedAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [-12, 0],
-                    }),
-                  },
-                ],
-              },
-            ]}
-          >
-            <View style={styles.savedIconWrap}>
-              <Ionicons name="checkmark" size={16} color={theme.colors.textDark} />
-            </View>
-            <View style={styles.savedBody}>
-              <Text style={styles.savedTitle}>{t("Profile updated")}</Text>
-              <Text style={styles.savedMsg}>{t("Your changes have been saved.")}</Text>
-            </View>
-          </Animated.View>
-        ) : null}
-
-        {loading ? (
-          <View style={styles.loadingWrap}>
-            <ActivityIndicator color={theme.colors.accent} size="large" />
-            <Text style={styles.loadingText}>{t("Loading profile…")}</Text>
+      {saved ? (
+        <Animated.View
+          style={[
+            styles.savedToast,
+            themed && styles.savedToastFundi,
+            {
+              opacity: savedAnim,
+              transform: [
+                {
+                  translateY: savedAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [-12, 0],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+          <View style={styles.savedIconWrap}>
+            <Ionicons name="checkmark" size={16} color={theme.colors.textDark} />
           </View>
-        ) : (
-          <>
-            <View style={styles.coverWrap}>
-              <ImageBackground
-                source={coverPhotoUri ? { uri: coverPhotoUri } : undefined}
-                style={styles.coverImage}
-                imageStyle={styles.coverImageStyle}
-              >
-                {!coverPhotoUri ? (
-                  <LinearGradient
-                    colors={["#3A2A0F", "#1A1A1A"]}
-                    style={styles.coverFallback}
-                  >
-                    <Ionicons
-                      name="image-outline"
-                      size={28}
-                      color="rgba(255,255,255,0.35)"
-                    />
-                  </LinearGradient>
-                ) : null}
+          <View style={styles.savedBody}>
+            <Text style={[styles.savedTitle, themed && styles.fundiText]}>
+              {t("Profile updated")}
+            </Text>
+            <Text style={[styles.savedMsg, themed && styles.fundiSub]}>
+              {t("Your changes have been saved.")}
+            </Text>
+          </View>
+        </Animated.View>
+      ) : null}
 
-                <TouchableOpacity
-                  style={styles.coverBtn}
-                  onPress={pickCoverPhoto}
-                  disabled={uploadingCover || saving}
-                  activeOpacity={0.85}
-                >
-                  <Ionicons
-                    name="camera"
-                    size={14}
-                    color={theme.colors.white}
-                  />
-                  <Text style={styles.coverBtnText}>
-                    {coverPhotoUri ? t("Change") : t("Add cover")}
-                  </Text>
-                </TouchableOpacity>
-
-                {uploadingCover ? (
-                  <View style={styles.coverLoading}>
-                    <ActivityIndicator color={theme.colors.accent} />
-                  </View>
-                ) : null}
-              </ImageBackground>
-
-              <View style={styles.avatarWrap}>
-                <LinearGradient
-                  colors={[theme.colors.accentLight, theme.colors.accentDark]}
-                  style={styles.avatarRing}
-                >
-                  <View style={styles.avatar}>
-                    {profilePhotoUri ? (
-                      <Image
-                        source={{ uri: profilePhotoUri }}
-                        style={styles.avatarImage}
-                      />
-                    ) : (
-                      <Text style={styles.avatarText}>{avatarInitials}</Text>
-                    )}
-                    {uploadingPhoto ? (
-                      <View style={styles.avatarLoading}>
-                        <ActivityIndicator color={theme.colors.accent} />
-                      </View>
-                    ) : null}
-                  </View>
-                </LinearGradient>
-                <TouchableOpacity
-                  style={styles.avatarEditBtn}
-                  onPress={pickProfilePhoto}
-                  disabled={uploadingPhoto || saving}
-                  activeOpacity={0.85}
-                >
-                  <Ionicons
-                    name="camera"
-                    size={13}
-                    color={theme.colors.textDark}
-                  />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <Text style={styles.sectionTitle}>{t("Profile Details")}</Text>
-
-            <Field label={t("Full Name")}>
-              <TextInput
-                style={styles.input}
-                value={fullName}
-                onChangeText={setFullName}
-                placeholder="John Doe"
-                placeholderTextColor={theme.colors.mutedDark}
-                autoCapitalize="words"
-              />
-            </Field>
-
-            <Field label={t("Email Address")}>
-              <TextInput
-                style={styles.input}
-                value={email}
-                onChangeText={setEmail}
-                placeholder="john.doe@email.com"
-                placeholderTextColor={theme.colors.mutedDark}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </Field>
-
-            <Field label={t("Phone Number")}>
-              <TextInput
-                style={styles.input}
-                value={phone}
-                onChangeText={setPhone}
-                placeholder="+256 771 123 456"
-                placeholderTextColor={theme.colors.mutedDark}
-                keyboardType="phone-pad"
-              />
-            </Field>
-
-            <Field label={t("Location")}>
-              <TextInput
-                style={styles.input}
-                value={locationText}
-                onChangeText={setLocationText}
-                placeholder="Kampala, Uganda"
-                placeholderTextColor={theme.colors.mutedDark}
-              />
-            </Field>
-
-            {isFundi ? (
-              <Field label={t("Bio (Optional)")}>
-                <TextInput
-                  style={[styles.input, styles.textArea]}
-                  multiline
-                  value={bio}
-                  onChangeText={setBio}
-                  placeholder={t("Tell clients about your experience...")}
-                  placeholderTextColor={theme.colors.mutedDark}
-                />
-              </Field>
-            ) : null}
-
-            <PrimaryButton
-              onPress={handleSave}
-              loading={saving}
-              icon="checkmark"
-              style={styles.saveBtn}
+      {loading ? (
+        <View style={styles.loadingWrap}>
+          <ActivityIndicator color={theme.colors.accent} size="large" />
+          <Text style={[styles.loadingText, themed && styles.fundiSub]}>
+            {t("Loading profile…")}
+          </Text>
+        </View>
+      ) : (
+        <>
+          <View style={styles.coverWrap}>
+            <ImageBackground
+              source={coverPhotoUri ? { uri: coverPhotoUri } : undefined}
+              style={styles.coverImage}
+              imageStyle={styles.coverImageStyle}
             >
-              {t("Save Changes")}
-            </PrimaryButton>
-          </>
-        )}
-      </ScrollView>
+              {!coverPhotoUri ? (
+                <LinearGradient
+                  colors={["#3A2A0F", "#1A1A1A"]}
+                  style={styles.coverFallback}
+                >
+                  <Ionicons
+                    name="image-outline"
+                    size={28}
+                    color="rgba(255,255,255,0.35)"
+                  />
+                </LinearGradient>
+              ) : null}
+
+              <TouchableOpacity
+                style={styles.coverBtn}
+                onPress={pickCoverPhoto}
+                disabled={uploadingCover || saving}
+                activeOpacity={0.85}
+              >
+                <Ionicons
+                  name="camera"
+                  size={14}
+                  color={theme.colors.white}
+                />
+                <Text style={styles.coverBtnText}>
+                  {coverPhotoUri ? t("Change") : t("Add cover")}
+                </Text>
+              </TouchableOpacity>
+
+              {uploadingCover ? (
+                <View style={styles.coverLoading}>
+                  <ActivityIndicator color={theme.colors.accent} />
+                </View>
+              ) : null}
+            </ImageBackground>
+
+            <View style={styles.avatarWrap}>
+              <LinearGradient
+                colors={[theme.colors.accentLight, theme.colors.accentDark]}
+                style={styles.avatarRing}
+              >
+                <View style={[styles.avatar, themed && styles.avatarFundi]}>
+                  {profilePhotoUri ? (
+                    <Image
+                      source={{ uri: profilePhotoUri }}
+                      style={styles.avatarImage}
+                    />
+                  ) : (
+                    <Text style={styles.avatarText}>{avatarInitials}</Text>
+                  )}
+                  {uploadingPhoto ? (
+                    <View style={styles.avatarLoading}>
+                      <ActivityIndicator color={theme.colors.accent} />
+                    </View>
+                  ) : null}
+                </View>
+              </LinearGradient>
+              <TouchableOpacity
+                style={[styles.avatarEditBtn, themed && styles.avatarEditBtnFundi]}
+                onPress={pickProfilePhoto}
+                disabled={uploadingPhoto || saving}
+                activeOpacity={0.85}
+              >
+                <Ionicons
+                  name="camera"
+                  size={13}
+                  color={theme.colors.textDark}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <Text style={[styles.sectionTitle, themed && styles.fundiText]}>
+            {t("Profile Details")}
+          </Text>
+
+          <Field label={t("Full Name")} light={themed}>
+            <TextInput
+              style={[styles.input, themed && styles.inputFundi]}
+              value={fullName}
+              onChangeText={setFullName}
+              placeholder="John Doe"
+              placeholderTextColor={themed ? fc.textSubtle : theme.colors.mutedDark}
+              autoCapitalize="words"
+            />
+          </Field>
+
+          <Field label={t("Email Address")} light={themed}>
+            <TextInput
+              style={[styles.input, themed && styles.inputFundi]}
+              value={email}
+              onChangeText={setEmail}
+              placeholder="john.doe@email.com"
+              placeholderTextColor={themed ? fc.textSubtle : theme.colors.mutedDark}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </Field>
+
+          <Field label={t("Phone Number")} light={themed}>
+            <TextInput
+              style={[styles.input, themed && styles.inputFundi]}
+              value={phone}
+              onChangeText={setPhone}
+              placeholder="+256 771 123 456"
+              placeholderTextColor={themed ? fc.textSubtle : theme.colors.mutedDark}
+              keyboardType="phone-pad"
+            />
+          </Field>
+
+          <Field label={t("Location")} light={themed}>
+            <TextInput
+              style={[styles.input, themed && styles.inputFundi]}
+              value={locationText}
+              onChangeText={setLocationText}
+              placeholder="Kampala, Uganda"
+              placeholderTextColor={themed ? fc.textSubtle : theme.colors.mutedDark}
+            />
+          </Field>
+
+          {isFundi ? (
+            <Field label={t("Bio (Optional)")} light={themed}>
+              <TextInput
+                style={[styles.input, styles.textArea, themed && styles.inputFundi]}
+                multiline
+                value={bio}
+                onChangeText={setBio}
+                placeholder={t("Tell clients about your experience...")}
+                placeholderTextColor={themed ? fc.textSubtle : theme.colors.mutedDark}
+              />
+            </Field>
+          ) : null}
+
+          <PrimaryButton
+            onPress={handleSave}
+            loading={saving}
+            icon="checkmark"
+            style={styles.saveBtn}
+          >
+            {t("Save Changes")}
+          </PrimaryButton>
+        </>
+      )}
+    </ScrollView>
+  );
+
+  if (themed) {
+    return (
+      <FundiThemedScreen title={pageTitle} onBack={() => onNavigate?.("profile")}>
+        {content}
+      </FundiThemedScreen>
+    );
+  }
+
+  return (
+    <ScreenWrapper style={styles.safe} edges={["top", "left", "right"]}>
+      {content}
     </ScreenWrapper>
   );
 }
@@ -678,4 +706,17 @@ const styles = StyleSheet.create({
   textArea: { minHeight: 96, textAlignVertical: "top" },
 
   saveBtn: { marginTop: 24 },
+
+  fundiText: { color: fc.text },
+  fundiSub: { color: fc.textMuted },
+  labelFundi: { color: fc.textMuted },
+  inputFundi: {
+    backgroundColor: fc.card,
+    borderColor: fc.border,
+    color: fc.text,
+    ...fundiCardShadow,
+  },
+  avatarFundi: { backgroundColor: fc.card },
+  avatarEditBtnFundi: { borderColor: fc.card },
+  savedToastFundi: { backgroundColor: fc.card, borderColor: fc.border },
 });

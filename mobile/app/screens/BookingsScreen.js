@@ -7,17 +7,38 @@ import {
   FlatList,
   RefreshControl,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import theme from '../theme';
+import { fc, fundiStyles, fundiCardShadow } from '../fundiTheme';
 import ScreenWrapper from '../components/ScreenWrapper';
+import FundiThemedScreen from '../components/FundiThemedScreen';
 import EmptyState from '../components/EmptyState';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import { useBookingOptional } from '../../context/BookingContext';
 import { formatUgx, formatBookingDate, initials } from '../utils/ratings';
-import { bookingRoute } from '../utils/bookings';
+import { bookingRoute, FUNDI_STATUS_TINT } from '../utils/bookings';
 import { useLanguage } from '../i18n/LanguageContext';
 
-function FundiBookingsView({ bookings, tab, setTab, onNavigate, loading, onRefresh, refreshing }) {
+function FundiBookingsView({
+  bookings,
+  tab,
+  setTab,
+  onNavigate,
+  loading,
+  onRefresh,
+  refreshing,
+  light = false,
+}) {
   const { t } = useLanguage();
+  const nameStyle = light ? fundiStyles.name : styles.name;
+  const serviceStyle = light ? fundiStyles.meta : styles.service;
+  const avatarStyle = light ? fundiStyles.avatar : styles.avatar;
+  const avatarTextStyle = light ? fundiStyles.avatarText : styles.avatarText;
+  const tabRowStyle = light ? fundiStyles.tabRow : styles.tabRow;
+  const topTabStyle = light ? fundiStyles.tab : styles.topTab;
+  const topTabActiveStyle = light ? fundiStyles.tabActive : styles.topTabActive;
+  const topTabTextStyle = light ? fundiStyles.tabText : styles.topTabText;
+  const topTabTextActiveStyle = light ? fundiStyles.tabTextActive : styles.topTabTextActive;
   const active = bookings.filter((b) =>
     ['PENDING', 'ACCEPTED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS'].includes(b.status)
   );
@@ -27,26 +48,69 @@ function FundiBookingsView({ bookings, tab, setTab, onNavigate, loading, onRefre
   const list =
     tab === 'active' ? active : tab === 'completed' ? completed : tab === 'cancelled' ? cancelled : [];
 
+  const renderItem = ({ item }) => {
+    const tint = FUNDI_STATUS_TINT[item.status] || FUNDI_STATUS_TINT.ACCEPTED;
+    return (
+      <TouchableOpacity
+        style={styles.fundiCard}
+        onPress={() => onNavigate?.('fundiBookingDetail', { bookingId: item.id })}
+        activeOpacity={0.85}
+      >
+        <View style={styles.fundiTopRow}>
+          <View style={avatarStyle}>
+            <Text style={avatarTextStyle}>{initials(item.clientName)}</Text>
+          </View>
+          <View style={styles.fundiMeta}>
+            <Text style={nameStyle} numberOfLines={1}>{item.clientName}</Text>
+            <View style={styles.fundiServiceRow}>
+              <Ionicons name="construct-outline" size={12} color={theme.colors.green} />
+              <Text style={serviceStyle} numberOfLines={1}>{item.service}</Text>
+            </View>
+            {item.address ? (
+              <View style={styles.fundiAddressRow}>
+                <Ionicons name="location-outline" size={12} color={fc.textSubtle} />
+                <Text style={styles.fundiAddress} numberOfLines={1}>{item.address}</Text>
+              </View>
+            ) : null}
+          </View>
+          <View style={[styles.fundiStatusPill, { backgroundColor: tint.bg }]}>
+            <Text style={[styles.fundiStatusText, { color: tint.fg }]}>{t(item.statusLabel)}</Text>
+          </View>
+        </View>
+        <View style={styles.fundiFooter}>
+          <Text style={styles.fundiDate}>
+            {item.createdAt ? formatBookingDate(item.createdAt) : ''}
+          </Text>
+          {item.agreedPrice ? (
+            <Text style={styles.fundiAmount}>{formatUgx(item.agreedPrice)}</Text>
+          ) : null}
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <>
-      <View style={styles.tabRow}>
+      <View style={tabRowStyle}>
         {[
           { key: 'active', label: t('Active ({{count}})', { count: active.length }) },
           { key: 'completed', label: t('Completed ({{count}})', { count: completed.length }) },
           { key: 'cancelled', label: t('Cancelled ({{count}})', { count: cancelled.length }) },
-        ].map((t) => (
+        ].map((tabItem) => (
           <TouchableOpacity
-            key={t.key}
-            style={[styles.topTab, tab === t.key && styles.topTabActive]}
-            onPress={() => setTab(t.key)}
+            key={tabItem.key}
+            style={[topTabStyle, tab === tabItem.key && topTabActiveStyle]}
+            onPress={() => setTab(tabItem.key)}
           >
-            <Text style={[styles.topTabText, tab === t.key && styles.topTabTextActive]}>{t.label}</Text>
+            <Text style={[topTabTextStyle, tab === tabItem.key && topTabTextActiveStyle]}>
+              {tabItem.label}
+            </Text>
           </TouchableOpacity>
         ))}
       </View>
 
       {loading ? (
-        <LoadingSkeleton count={3} />
+        <LoadingSkeleton count={3} variant={light ? 'fundi' : 'dark'} />
       ) : (
         <FlatList
           data={list}
@@ -58,6 +122,7 @@ function FundiBookingsView({ bookings, tab, setTab, onNavigate, loading, onRefre
           ListEmptyComponent={
             <EmptyState
               icon="briefcase-outline"
+              variant={light ? 'fundi' : 'dark'}
               title={
                 tab === 'cancelled'
                   ? t('No cancelled bookings')
@@ -74,29 +139,7 @@ function FundiBookingsView({ bookings, tab, setTab, onNavigate, loading, onRefre
               }
             />
           }
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.card}
-              onPress={() => onNavigate?.('fundiBookingDetail', { bookingId: item.id })}
-            >
-              <View style={styles.cardRow}>
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>{initials(item.clientName)}</Text>
-                </View>
-                <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={styles.name}>{item.clientName}</Text>
-                  <Text style={styles.service}>{item.service}</Text>
-                  <Text style={styles.meta}>{item.address}</Text>
-                </View>
-                <View style={[styles.statusPill, styles.status_accepted]}>
-                  <Text style={styles.statusText}>{t(item.statusLabel)}</Text>
-                </View>
-              </View>
-              {item.agreedPrice ? (
-                <Text style={styles.amount}>{formatUgx(item.agreedPrice)}</Text>
-              ) : null}
-            </TouchableOpacity>
-          )}
+          renderItem={renderItem}
         />
       )}
     </>
@@ -169,30 +212,31 @@ export default function BookingsScreen({
 
   if (userRole === 'fundi') {
     return (
-      <ScreenWrapper style={styles.safe} edges={['top', 'left', 'right']}>
-        <View style={styles.container}>
-          <Text style={styles.title}>{t('My Jobs')}</Text>
-          <FundiBookingsView
-            bookings={fundiBookings}
-            tab={fundiTab}
-            setTab={setFundiTab}
-            onNavigate={onNavigate}
-            loading={bookingCtx?.loading}
-            refreshing={refreshing}
-            onRefresh={() => {
-              setRefreshing(true);
-              bookingCtx?.refreshBookings?.().finally?.(() => setRefreshing(false));
-            }}
+      <FundiThemedScreen title={t('My Jobs')} scroll={false} contentStyle={{ paddingTop: 8, flex: 1 }}>
+        <View style={{ flex: 1 }}>
+        <FundiBookingsView
+          bookings={fundiBookings}
+          tab={fundiTab}
+          setTab={setFundiTab}
+          onNavigate={onNavigate}
+          loading={bookingCtx?.loading}
+          refreshing={refreshing}
+          light
+          onRefresh={() => {
+            setRefreshing(true);
+            bookingCtx?.refreshBookings?.().finally?.(() => setRefreshing(false));
+          }}
+        />
+        {bookingCtx?.error ? (
+          <EmptyState
+            icon="cloud-offline-outline"
+            variant="fundi"
+            title={t('Could not load bookings')}
+            message={bookingCtx.error}
           />
-          {bookingCtx?.error ? (
-            <EmptyState
-              icon="cloud-offline-outline"
-              title={t('Could not load bookings')}
-              message={bookingCtx.error}
-            />
-          ) : null}
+        ) : null}
         </View>
-      </ScreenWrapper>
+      </FundiThemedScreen>
     );
   }
 
@@ -340,6 +384,40 @@ export default function BookingsScreen({
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: theme.colors.black },
+
+  fundiCard: {
+    backgroundColor: fc.card,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: fc.border,
+    padding: 14,
+    marginBottom: 12,
+    ...fundiCardShadow,
+  },
+  fundiTopRow: { flexDirection: 'row', alignItems: 'flex-start' },
+  fundiMeta: { flex: 1, marginLeft: 12, minWidth: 0 },
+  fundiServiceRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },
+  fundiAddressRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },
+  fundiAddress: { color: fc.textMuted, fontSize: 12, flex: 1 },
+  fundiStatusPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    marginLeft: 8,
+  },
+  fundiStatusText: { fontSize: 11, fontWeight: '800', letterSpacing: 0.2 },
+  fundiFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 12,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: fc.border,
+  },
+  fundiDate: { color: fc.textMuted, fontSize: 12 },
+  fundiAmount: { color: fc.accentDark, fontSize: 14, fontWeight: '800' },
+
   container: { flex: 1, paddingHorizontal: 16, paddingTop: 12 },
   title: { color: theme.colors.white, fontSize: 18, fontWeight: '900', marginBottom: 12 },
   tabRow: { flexDirection: 'row', gap: 10, marginBottom: 12 },
@@ -382,6 +460,7 @@ const styles = StyleSheet.create({
   amount: { color: theme.colors.accent, fontWeight: '800', marginTop: 10, fontSize: 14 },
   statusPill: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12 },
   statusText: { fontSize: 10, fontWeight: '800', color: theme.colors.white },
+  statusTextDark: { color: fc.text },
   status_accepted: { backgroundColor: 'rgba(34,197,94,0.15)' },
   status_pending: { backgroundColor: 'rgba(59,130,246,0.15)' },
   status_on_the_way: { backgroundColor: 'rgba(59,130,246,0.15)' },

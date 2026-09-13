@@ -22,6 +22,11 @@ const colors = {
   overlay: 'rgba(0,0,0,0.6)',
   glass: 'rgba(255,255,255,0.04)',
   mapGrid: '#1a1a1a',
+  bgLight: '#F0F2F5',
+  cardLight: '#FFFFFF',
+  textMuted: '#6B7280',
+  textSubtle: '#9CA3AF',
+  shadow: 'rgba(0,0,0,0.08)',
 };
 
 const typography = {

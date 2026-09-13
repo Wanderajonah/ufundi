@@ -11,8 +11,9 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import theme from '../theme';
+import { fc, fundiCardShadow } from '../fundiTheme';
 import ScreenWrapper from '../components/ScreenWrapper';
-import LoadingSkeleton from '../components/LoadingSkeleton';
+import { ProfileSkeleton } from '../components/LoadingSkeleton';
 import { getProfile } from '../../services/usersApi';
 import { resolveMediaUrl } from '../../utils/image';
 import { initials } from '../utils/ratings';
@@ -49,21 +50,29 @@ const VERIFY_MAP = {
   },
 };
 
-function Stat({ value, label, star }) {
+function Stat({ value, label, star, light }) {
   return (
     <View style={styles.stat}>
-      <Text style={styles.statValue}>
+      <Text style={[styles.statValue, light && styles.statValueFundi]}>
         {value}
         {star ? <Text style={styles.statStar}> ★</Text> : null}
       </Text>
-      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={[styles.statLabel, light && styles.statLabelFundi]}>{label}</Text>
     </View>
   );
 }
 
-function VerificationChip({ status, onPress }) {
+function VerificationChip({ status, onPress, light }) {
   const { t } = useLanguage();
-  const info = VERIFY_MAP[status] || VERIFY_MAP.unverified;
+  let info = VERIFY_MAP[status] || VERIFY_MAP.unverified;
+  if (light && (status === 'unverified' || !status)) {
+    info = {
+      ...info,
+      color: fc.textMuted,
+      bg: 'rgba(0,0,0,0.04)',
+      border: 'rgba(0,0,0,0.12)',
+    };
+  }
   return (
     <TouchableOpacity
       style={[styles.verifyChip, { backgroundColor: info.bg, borderColor: info.border }]}
@@ -77,19 +86,21 @@ function VerificationChip({ status, onPress }) {
   );
 }
 
-function VerifyPromptCard({ status, notes, onPress }) {
+function VerifyPromptCard({ status, notes, onPress, light }) {
   const { t } = useLanguage();
   if (status === 'verified') return null;
 
   if (status === 'pending') {
     return (
-      <View style={styles.verifyCard}>
+      <View style={[styles.verifyCard, light && styles.verifyCardFundi]}>
         <View style={styles.verifyCardIconWrap}>
           <Ionicons name="time-outline" size={22} color={theme.colors.accent} />
         </View>
         <View style={styles.verifyCardBody}>
-          <Text style={styles.verifyCardTitle}>{t('Verification in review')}</Text>
-          <Text style={styles.verifyCardText}>
+          <Text style={[styles.verifyCardTitle, light && styles.verifyCardTitleFundi]}>
+            {t('Verification in review')}
+          </Text>
+          <Text style={[styles.verifyCardText, light && styles.verifyCardTextFundi]}>
             {t("We're checking your documents. This usually takes 1–2 business days.")}
           </Text>
         </View>
@@ -99,7 +110,14 @@ function VerifyPromptCard({ status, notes, onPress }) {
 
   const isRejected = status === 'rejected';
   return (
-    <View style={[styles.verifyCard, isRejected && styles.verifyCardRejected]}>
+    <View
+      style={[
+        styles.verifyCard,
+        light && styles.verifyCardFundi,
+        isRejected && styles.verifyCardRejected,
+        isRejected && light && styles.verifyCardRejectedFundi,
+      ]}
+    >
       <View style={styles.verifyCardIconWrap}>
         <Ionicons
           name={isRejected ? 'shield-outline' : 'shield-checkmark-outline'}
@@ -108,10 +126,10 @@ function VerifyPromptCard({ status, notes, onPress }) {
         />
       </View>
       <View style={styles.verifyCardBody}>
-        <Text style={styles.verifyCardTitle}>
+        <Text style={[styles.verifyCardTitle, light && styles.verifyCardTitleFundi]}>
           {isRejected ? t('Verification rejected') : t('Get verified')}
         </Text>
-        <Text style={styles.verifyCardText}>
+        <Text style={[styles.verifyCardText, light && styles.verifyCardTextFundi]}>
           {isRejected
             ? t('Your documents were rejected. Submit new ones to get verified.')
             : t('Verified fundis build trust with clients and rank higher in search.')}
@@ -211,14 +229,18 @@ export default function ProfileScreen({
   ];
 
   return (
-    <ScreenWrapper style={styles.safe} edges={['top', 'left', 'right']}>
+    <ScreenWrapper
+      style={[styles.safe, isFundi && styles.safeFundi]}
+      variant={isFundi ? 'fundi' : 'dark'}
+      edges={['top', 'left', 'right']}
+    >
       <ScrollView
-        style={styles.container}
+        style={[styles.container, isFundi && styles.containerFundi]}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         {loading ? (
-          <LoadingSkeleton count={2} />
+          <ProfileSkeleton variant={isFundi ? 'fundi' : 'dark'} />
         ) : (
           <>
             <View style={styles.hero}>
@@ -268,7 +290,7 @@ export default function ProfileScreen({
                   </View>
                 </LinearGradient>
                 <TouchableOpacity
-                  style={styles.avatarEditBtn}
+                  style={[styles.avatarEditBtn, isFundi && styles.avatarEditBtnFundi]}
                   onPress={() => onNavigate?.('edit')}
                   activeOpacity={0.85}
                 >
@@ -277,13 +299,14 @@ export default function ProfileScreen({
               </View>
 
               <View style={styles.identity}>
-                <Text style={styles.name}>{displayName}</Text>
-                <Text style={styles.sub}>{email || t('No email added')}</Text>
+                <Text style={[styles.name, isFundi && styles.nameFundi]}>{displayName}</Text>
+                <Text style={[styles.sub, isFundi && styles.subFundi]}>{email || t('No email added')}</Text>
                 {isFundi ? (
                 <View style={styles.metaRow}>
-                  <Text style={styles.trade} numberOfLines={1}>{trade}</Text>
+                  <Text style={[styles.trade, isFundi && styles.tradeFundi]} numberOfLines={1}>{trade}</Text>
                   <VerificationChip
                     status={verificationStatus}
+                    light={isFundi}
                     onPress={
                       verificationStatus === 'verified'
                         ? undefined
@@ -298,50 +321,52 @@ export default function ProfileScreen({
                 <VerifyPromptCard
                   status={verificationStatus}
                   notes={fundiProfile.verificationNotes}
+                  light={isFundi}
                   onPress={() => onNavigate?.('verification')}
                 />
               ) : null}
 
               {isFundi ? (
-                <View style={styles.statsRow}>
-                  <Stat value={rating ? rating.toFixed(1) : '—'} label={t('Rating')} star />
-                  <View style={styles.statDivider} />
-                  <Stat value={completedJobs} label={t('Jobs Done')} />
-                  <View style={styles.statDivider} />
-                  <Stat value={yearsExperience} label={t('Years')} />
+                <View style={[styles.statsRow, isFundi && styles.statsRowFundi]}>
+                  <Stat value={rating ? rating.toFixed(1) : '—'} label={t('Rating')} star light={isFundi} />
+                  <View style={[styles.statDivider, isFundi && styles.statDividerFundi]} />
+                  <Stat value={completedJobs} label={t('Jobs Done')} light={isFundi} />
+                  <View style={[styles.statDivider, isFundi && styles.statDividerFundi]} />
+                  <Stat value={yearsExperience} label={t('Years')} light={isFundi} />
                 </View>
               ) : null}
 
               {isFundi && skills.length > 0 ? (
-                <View style={styles.skillsCard}>
-                  <Text style={styles.skillsTitle}>{t('Skills')}</Text>
+                <View style={[styles.skillsCard, isFundi && styles.skillsCardFundi]}>
+                  <Text style={[styles.skillsTitle, isFundi && styles.skillsTitleFundi]}>{t('Skills')}</Text>
                   <View style={styles.skillRow}>
                     {skills.map((s) => (
-                      <View key={s} style={styles.skillChip}>
-                        <Text style={styles.skillText}>{s}</Text>
+                      <View key={s} style={[styles.skillChip, isFundi && styles.skillChipFundi]}>
+                        <Text style={[styles.skillText, isFundi && styles.skillTextFundi]}>{s}</Text>
                       </View>
                     ))}
                   </View>
                 </View>
               ) : null}
 
-              <View style={styles.menuCard}>
-                <Text style={styles.menuHeader}>{t('Quick Actions')}</Text>
+              <View style={[styles.menuCard, isFundi && styles.menuCardFundi]}>
+                <Text style={[styles.menuHeader, isFundi && styles.menuHeaderFundi]}>{t('Quick Actions')}</Text>
                 <View style={styles.quickGrid}>
                   {accountItems.map((item) => (
-                    <QuickActionTile key={item.key} item={item} onPress={handleMenu} />
+                    <QuickActionTile key={item.key} item={item} onPress={handleMenu} light={isFundi} />
                   ))}
                 </View>
               </View>
 
-              <View style={styles.menuCard}>
-                <Text style={styles.menuHeader}>{t('General')}</Text>
+              <View style={[styles.menuCard, isFundi && styles.menuCardFundi]}>
+                <Text style={[styles.menuHeader, isFundi && styles.menuHeaderFundi]}>{t('General')}</Text>
                 {generalItems.map((item, i) => (
                   <MenuRow
                     key={item.key}
                     item={item}
                     onPress={handleMenu}
                     isLast={i === generalItems.length - 1}
+                    light={isFundi}
                   />
                 ))}
               </View>
@@ -367,11 +392,11 @@ export default function ProfileScreen({
   );
 }
 
-function MenuRow({ item, onPress, isLast }) {
+function MenuRow({ item, onPress, isLast, light }) {
   const { t } = useLanguage();
   return (
     <TouchableOpacity
-      style={[styles.menuRow, isLast && styles.menuRowLast]}
+      style={[styles.menuRow, light && styles.menuRowFundi, isLast && styles.menuRowLast]}
       activeOpacity={0.7}
       onPress={() => onPress(item.key)}
     >
@@ -379,25 +404,25 @@ function MenuRow({ item, onPress, isLast }) {
         <View style={styles.menuIconWrap}>
           <Ionicons name={item.icon} size={18} color={theme.colors.accent} />
         </View>
-        <Text style={styles.menuText}>{t(item.label)}</Text>
+        <Text style={[styles.menuText, light && styles.menuTextFundi]}>{t(item.label)}</Text>
       </View>
-      <Ionicons name="chevron-forward" size={16} color={theme.colors.mutedDark} />
+      <Ionicons name="chevron-forward" size={16} color={light ? fc.textMuted : theme.colors.mutedDark} />
     </TouchableOpacity>
   );
 }
 
-function QuickActionTile({ item, onPress }) {
+function QuickActionTile({ item, onPress, light }) {
   const { t } = useLanguage();
   return (
     <TouchableOpacity
-      style={styles.tile}
+      style={[styles.tile, light && styles.tileFundi]}
       activeOpacity={0.7}
       onPress={() => onPress(item.key)}
     >
       <View style={styles.tileIconWrap}>
         <Ionicons name={item.icon} size={22} color={theme.colors.accent} />
       </View>
-      <Text style={styles.tileLabel} numberOfLines={2}>
+      <Text style={[styles.tileLabel, light && styles.tileLabelFundi]} numberOfLines={2}>
         {t(item.label)}
       </Text>
     </TouchableOpacity>
@@ -474,7 +499,7 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: 16 },
 
   avatarWrap: {
-    marginTop: -46,
+    marginTop: -48,
     width: 96,
     alignSelf: 'center',
     alignItems: 'center',
@@ -695,4 +720,52 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   logoutText: { color: theme.colors.red, fontWeight: '900', fontSize: 14 },
+
+  safeFundi: { backgroundColor: fc.page },
+  containerFundi: { backgroundColor: fc.page },
+  avatarEditBtnFundi: { borderColor: fc.card },
+  nameFundi: { color: fc.text },
+  subFundi: { color: fc.textMuted },
+  tradeFundi: { color: fc.accentDark },
+  verifyCardFundi: {
+    backgroundColor: fc.card,
+    borderColor: 'rgba(255,184,0,0.4)',
+    ...fundiCardShadow,
+  },
+  verifyCardRejectedFundi: { borderColor: 'rgba(239,68,68,0.35)' },
+  verifyCardTitleFundi: { color: fc.text },
+  verifyCardTextFundi: { color: fc.textMuted },
+  statsRowFundi: {
+    backgroundColor: fc.card,
+    borderColor: fc.border,
+    ...fundiCardShadow,
+  },
+  statValueFundi: { color: fc.text },
+  statLabelFundi: { color: fc.textMuted },
+  statDividerFundi: { backgroundColor: fc.border },
+  skillsCardFundi: {
+    backgroundColor: fc.card,
+    borderColor: fc.border,
+    ...fundiCardShadow,
+  },
+  skillsTitleFundi: { color: fc.text },
+  skillChipFundi: {
+    backgroundColor: 'rgba(255,184,0,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,184,0,0.25)',
+  },
+  skillTextFundi: { color: fc.accentDark },
+  menuCardFundi: {
+    backgroundColor: fc.card,
+    borderColor: fc.border,
+    ...fundiCardShadow,
+  },
+  menuHeaderFundi: { color: fc.textMuted },
+  tileFundi: {
+    backgroundColor: fc.page,
+    borderColor: fc.border,
+  },
+  tileLabelFundi: { color: fc.text },
+  menuRowFundi: { borderBottomColor: fc.border },
+  menuTextFundi: { color: fc.text },
 });

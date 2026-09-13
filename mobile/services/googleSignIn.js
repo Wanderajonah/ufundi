@@ -1,71 +1,91 @@
-import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
+import Constants from 'expo-constants';
 
-// MUST be called at module level, outside any component
-WebBrowser.maybeCompleteAuthSession();
+const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
 
-const GOOGLE_USERINFO_URL = 'https://www.googleapis.com/oauth2/v2/userinfo';
+// Expo Go cannot load the native Google Sign-In module — Google Sign-In
+// requires a development or release build (expo run:android / EAS).
+export const isExpoGo = Constants.executionEnvironment === 'storeClient';
 
-export function useGoogleSignIn() {
-  const androidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
-  const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
-  const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+// Load the native module lazily. A top-level import evaluates the native
+// TurboModule at module-load time and throws inside Expo Go, crashing the
+// whole app on boot. Guarded require keeps Expo Go usable for everything
+// that isn't Google Sign-In.
+let GoogleSignin = null;
+try {
+  if (!isExpoGo) {
+    ({ GoogleSignin } = require('@react-native-google-signin/google-signin'));
+  }
+} catch (_) {
+  GoogleSignin = null;
+}
 
-  const disabled = !androidClientId && !iosClientId;
-
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId: androidClientId || undefined,
-    iosClientId: iosClientId || undefined,
-    webClientId: webClientId || undefined,
+// Native Google Sign-In is deliberately used instead of expo-auth-session.
+// Google rejects Expo Go's exp:// LAN callback as an insecure redirect URI.
+// Configure once at module load; Android identifies the app through its package
+// name and signing SHA-1 registered in Google Cloud, not a redirect URI.
+if (webClientId && !isExpoGo && GoogleSignin) {
+  GoogleSignin.configure({
+    webClientId,
     scopes: ['profile', 'email'],
   });
+}
 
-  const safePromptAsync = async () => {
+export function useGoogleSignIn() {
+  const disabled = !webClientId;
+
+  const signIn = async () => {
     if (disabled) {
       throw new Error(
-        'Google sign-in is not configured. Missing client IDs. Check your environment variables.'
+        'Google sign-in is not configured. Missing EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID.'
       );
     }
-    return promptAsync();
+
+    if (typeof GoogleSignin?.signIn !== 'function') {
+      throw new Error(
+        'The native Google Sign-In module is not present in this build. Close the app and reinstall a fresh development or release build.'
+      );
+    }
+
+    await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+    return GoogleSignin.signIn();
   };
 
-  return { request, response, promptAsync: safePromptAsync, disabled };
-}
-
-
-export async function fetchGoogleUser(accessToken) {
-  const res = await fetch(GOOGLE_USERINFO_URL, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-
-  if (!res.ok) throw new Error('Unable to fetch Google profile information.');
-
-  const user = await res.json();
-  return {
-    id: user.id,
-    name: user.name || user.email || 'Google User',
-    email: user.email,
-    picture: user.picture,
-  };
-}
-
-// Standalone helper intentionally not provided, because this file
-// uses Expo's `useAuthRequest` hook which must run inside a React component.
-// Callers should use `useGoogleSignIn()` and then `promptAsync()`.
-export async function googleSignIn() {
-  throw new Error(
-    'googleSignIn() is not available here. Use the `useGoogleSignIn` hook in your component and call promptAsync().'
-  );
+  return { signIn, disabled };
 }
 
 export function mapGoogleSignInError(error) {
   const message = error?.message || '';
+  const code = error?.code;
+
+  if (message.includes('signIn is not a function')) {
+    return 'This copy of the app is out of date. Fully close it and reinstall the latest build.';
+  }
+  if (
+    code === '10' ||
+    message.includes('DEVELOPER_ERROR') ||
+    message.includes('The caller is not authorized') ||
+    message.includes('developer console')
+  ) {
+    return 'This build is not registered for Google Sign-In. Add an Android OAuth client in Google Cloud Console with package com.fundilink.uganda and the SHA-1 of the signing certificate this APK was built with (see mobile/.env.example), then rebuild.';
+  }
+  if (message.includes('Native module')) {
+    return 'Google sign-in needs the FundiLink development or release build. It does not run in Expo Go.';
+  }
   if (message.includes('No matching browser activity found')) {
     return 'Google sign-in requires a browser app. Please install Chrome or another browser and try again.';
   }
-  if (message.includes('cancelled')) {
+  if (
+    message.includes('cancelled') ||
+    message.includes('CANCELLED') ||
+    message.includes('SIGN_IN_CANCELLED')
+  ) {
     return 'Sign-in was cancelled.';
+  }
+  if (message.includes('SIGN_IN_REQUIRED')) {
+    return 'Sign in to a Google account on this device first, then try again.';
+  }
+  if (message.includes('INTERNAL_ERROR')) {
+    return 'Google could not complete sign-in. Try again, or restart the app.';
   }
   return message || 'Google sign-in failed.';
 }
-

@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import theme from '../theme';
+import { fc, fundiCardShadow } from '../fundiTheme';
 import ScreenWrapper from '../components/ScreenWrapper';
+import FundiThemedScreen from '../components/FundiThemedScreen';
 import PrimaryButton from '../components/PrimaryButton';
 import { getWallet, transfer } from '../../services/walletApi';
 import { useLanguage } from '../i18n/LanguageContext';
 
-export default function TransferScreen({ onNavigate }) {
+export default function TransferScreen({ onNavigate, userRole = 'customer' }) {
+  const isFundi = userRole === 'fundi';
   const { t } = useLanguage();
   const [amount, setAmount] = useState('');
   const [recipientPhone, setRecipientPhone] = useState('');
@@ -46,9 +49,9 @@ export default function TransferScreen({ onNavigate }) {
     }
   };
 
-  return (
-    <ScreenWrapper style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+  const content = (
+    <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      {!isFundi ? (
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => onNavigate?.('wallet')}>
             <Ionicons name="chevron-back" size={22} color={theme.colors.white} />
@@ -56,44 +59,58 @@ export default function TransferScreen({ onNavigate }) {
           <Text style={styles.title}>{t('Transfer')}</Text>
           <View style={{ width: 40 }} />
         </View>
+      ) : null}
 
-        <View style={styles.balanceBanner}>
-          <Text style={styles.balanceLabel}>{t('Available Balance')}</Text>
-          <Text style={styles.balanceAmount}>UGX {(balance || 0).toLocaleString()}</Text>
-        </View>
+      <View style={[styles.balanceBanner, isFundi && styles.fundiBalanceBanner]}>
+        <Text style={[styles.balanceLabel, isFundi && styles.fundiTextMuted]}>{t('Available Balance')}</Text>
+        <Text style={[styles.balanceAmount, isFundi && styles.fundiBalanceAmount]}>{t('UGX {{amount}}', { amount: (balance || 0).toLocaleString() })}</Text>
+      </View>
 
-        <Text style={styles.section}>{t('RECIPIENT')}</Text>
-        <View style={styles.phoneInput}>
-          <Text style={styles.phonePrefix}>+256</Text>
-          <TextInput
-            style={[styles.input, { flex: 1 }]}
-            value={recipientPhone}
-            onChangeText={setRecipientPhone}
-            keyboardType="phone-pad"
-            placeholder="7XX XXX XXX"
-            placeholderTextColor={theme.colors.mutedDark}
-          />
-        </View>
-        <Text style={styles.hint}>{t('Enter the phone number of the FundiLink user to send funds to.')}</Text>
+      <Text style={[styles.section, isFundi && styles.fundiSection]}>{t('RECIPIENT')}</Text>
+      <View style={[styles.phoneInput, isFundi && styles.fundiInputCard]}>
+        <Text style={[styles.phonePrefix, isFundi && styles.fundiTextMuted]}>+256</Text>
+        <TextInput
+          style={[styles.input, { flex: 1 }, isFundi && styles.fundiInput]}
+          value={recipientPhone}
+          onChangeText={setRecipientPhone}
+          keyboardType="phone-pad"
+          placeholder="7XX XXX XXX"
+          placeholderTextColor={isFundi ? fc.textSubtle : theme.colors.mutedDark}
+        />
+      </View>
+      <Text style={[styles.hint, isFundi && styles.fundiHint]}>{t('Enter the phone number of the FundiLink user to send funds to.')}</Text>
 
-        <Text style={styles.section}>{t('AMOUNT')}</Text>
-        <View style={styles.amountInput}>
-          <Text style={styles.currency}>UGX</Text>
-          <TextInput
-            style={styles.input}
-            value={amount}
-            onChangeText={setAmount}
-            keyboardType="number-pad"
-            placeholder="0"
-            placeholderTextColor={theme.colors.mutedDark}
-          />
-        </View>
+      <Text style={[styles.section, isFundi && styles.fundiSection]}>{t('AMOUNT')}</Text>
+      <View style={[styles.amountInput, isFundi && styles.fundiInputCard]}>
+        <Text style={styles.currency}>UGX</Text>
+        <TextInput
+          style={[styles.input, isFundi && styles.fundiInput]}
+          value={amount}
+          onChangeText={setAmount}
+          keyboardType="number-pad"
+          placeholder="0"
+          placeholderTextColor={isFundi ? fc.textSubtle : theme.colors.mutedDark}
+        />
+      </View>
 
-        <PrimaryButton onPress={handleTransfer} disabled={loading || numericAmount <= 0 || numericAmount > balance}>
-          {loading ? t('Processing...') : t('Transfer UGX {{amount}}', { amount: numericAmount.toLocaleString() })}
-        </PrimaryButton>
-        {loading ? <ActivityIndicator color={theme.colors.accent} style={{ marginTop: 12 }} /> : null}
-      </ScrollView>
+      <PrimaryButton onPress={handleTransfer} disabled={loading || numericAmount <= 0 || numericAmount > balance}>
+        {loading ? t('Processing...') : t('Transfer UGX {{amount}}', { amount: numericAmount.toLocaleString() })}
+      </PrimaryButton>
+      {loading ? <ActivityIndicator color={theme.colors.accent} style={{ marginTop: 12 }} /> : null}
+    </ScrollView>
+  );
+
+  if (isFundi) {
+    return (
+      <FundiThemedScreen title={t('Transfer')} onBack={() => onNavigate?.('wallet')}>
+        {content}
+      </FundiThemedScreen>
+    );
+  }
+
+  return (
+    <ScreenWrapper style={styles.safe}>
+      {content}
     </ScreenWrapper>
   );
 }
@@ -114,4 +131,13 @@ const styles = StyleSheet.create({
   amountInput: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.input, borderRadius: theme.radius.md, padding: 14, marginBottom: 20, borderWidth: 1, borderColor: theme.colors.border },
   currency: { color: theme.colors.accent, fontWeight: '900', fontSize: 18, marginRight: 10 },
   hint: { color: theme.colors.mutedDark, fontSize: 12, marginBottom: 16, marginTop: -4 },
+
+  fundiText: { color: fc.text },
+  fundiTextMuted: { color: fc.textMuted },
+  fundiSection: { color: fc.textMuted },
+  fundiHint: { color: fc.textMuted },
+  fundiInputCard: { backgroundColor: fc.card, borderColor: fc.border, ...fundiCardShadow },
+  fundiInput: { color: fc.text },
+  fundiBalanceBanner: { backgroundColor: fc.card, borderColor: fc.border, ...fundiCardShadow },
+  fundiBalanceAmount: { color: fc.accentDark },
 });

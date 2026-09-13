@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import theme from '../theme';
+import { fc, fundiCardShadow } from '../fundiTheme';
 import ScreenWrapper from '../components/ScreenWrapper';
+import FundiThemedScreen from '../components/FundiThemedScreen';
 import PrimaryButton from '../components/PrimaryButton';
 import { getWallet, deposit } from '../../services/walletApi';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -30,7 +32,8 @@ const METHODS = [
   },
 ];
 
-export default function DepositScreen({ onNavigate }) {
+export default function DepositScreen({ onNavigate, userRole = 'customer' }) {
+  const isFundi = userRole === 'fundi';
   const { t } = useLanguage();
   const [amount, setAmount] = useState('');
   const [phone, setPhone] = useState('');
@@ -89,9 +92,9 @@ export default function DepositScreen({ onNavigate }) {
     }
   };
 
-  return (
-    <ScreenWrapper style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+  const content = (
+    <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      {!isFundi ? (
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => onNavigate?.('wallet')}>
             <Ionicons name="chevron-back" size={20} color={theme.colors.white} />
@@ -99,104 +102,118 @@ export default function DepositScreen({ onNavigate }) {
           <Text style={styles.title}>{t('Deposit')}</Text>
           <View style={{ width: 40 }} />
         </View>
+      ) : null}
 
-        {wallet ? (
-          <View style={styles.balanceRow}>
-            <View style={styles.balanceIcon}>
-              <Ionicons name="wallet-outline" size={18} color={theme.colors.accent} />
-            </View>
-            <Text style={styles.balanceLabel}>{t('Available balance')}</Text>
-            <Text style={styles.balanceValue}>{formatAmount(wallet.balance)}</Text>
+      {wallet ? (
+        <View style={[styles.balanceRow, isFundi && styles.fundiBalanceRow]}>
+          <View style={styles.balanceIcon}>
+            <Ionicons name="wallet-outline" size={18} color={theme.colors.accent} />
           </View>
-        ) : null}
+          <Text style={[styles.balanceLabel, isFundi && styles.fundiTextMuted]}>{t('Available balance')}</Text>
+          <Text style={[styles.balanceValue, isFundi && styles.fundiBalanceValue]}>{formatAmount(wallet.balance)}</Text>
+        </View>
+      ) : null}
 
-        <Text style={styles.section}>{t('Payment Method')}</Text>
-        {METHODS.map((m) => {
-          const selected = method === m.key;
+      <Text style={[styles.section, isFundi && styles.fundiSection]}>{t('Payment Method')}</Text>
+      {METHODS.map((m) => {
+        const selected = method === m.key;
+        return (
+          <TouchableOpacity
+            key={m.key}
+            style={[styles.methodCard, isFundi && styles.fundiCard, selected && styles.methodOn]}
+            activeOpacity={0.8}
+            onPress={() => setMethod(m.key)}
+          >
+            <View style={styles.methodLeft}>
+              <View style={[styles.logo, { backgroundColor: m.bg }]}>
+                <Image
+                  source={m.logo}
+                  style={styles.logoImage}
+                  resizeMode={m.contain ? 'contain' : 'cover'}
+                />
+              </View>
+              <Text style={[styles.methodName, isFundi && styles.fundiText]}>{t(m.label)}</Text>
+            </View>
+            <Ionicons
+              name={selected ? 'checkmark-circle' : 'ellipse-outline'}
+              size={22}
+              color={selected ? theme.colors.accent : isFundi ? fc.textSubtle : theme.colors.mutedDark}
+            />
+          </TouchableOpacity>
+        );
+      })}
+
+      <Text style={[styles.section, isFundi && styles.fundiSection]}>{t('Amount')}</Text>
+      <View style={[styles.amountCard, isFundi && styles.fundiInputCard]}>
+        <Text style={styles.currencyPrefix}>{currency}</Text>
+        <TextInput
+          style={[styles.amountInput, isFundi && styles.fundiText]}
+          value={amount}
+          onChangeText={setAmount}
+          keyboardType="number-pad"
+          placeholder="0"
+          placeholderTextColor={isFundi ? fc.textSubtle : theme.colors.mutedDark}
+        />
+      </View>
+
+      <View style={styles.presets}>
+        {PRESETS.map((p) => {
+          const active = numericAmount === p;
           return (
             <TouchableOpacity
-              key={m.key}
-              style={[styles.methodCard, selected && styles.methodOn]}
-              activeOpacity={0.8}
-              onPress={() => setMethod(m.key)}
+              key={p}
+              style={[styles.presetBtn, isFundi && styles.fundiPresetBtn, active && styles.presetOn]}
+              activeOpacity={0.85}
+              onPress={() => handlePreset(p)}
             >
-              <View style={styles.methodLeft}>
-                <View style={[styles.logo, { backgroundColor: m.bg }]}>
-                  <Image
-                    source={m.logo}
-                    style={styles.logoImage}
-                    resizeMode={m.contain ? 'contain' : 'cover'}
-                  />
-                </View>
-                <Text style={styles.methodName}>{t(m.label)}</Text>
-              </View>
-              <Ionicons
-                name={selected ? 'checkmark-circle' : 'ellipse-outline'}
-                size={22}
-                color={selected ? theme.colors.accent : theme.colors.mutedDark}
-              />
+              <Text style={[styles.presetText, isFundi && styles.fundiPresetText, active && styles.presetTextOn]}>
+                {currency} {p.toLocaleString()}
+              </Text>
             </TouchableOpacity>
           );
         })}
+      </View>
 
-        <Text style={styles.section}>{t('Amount')}</Text>
-        <View style={styles.amountCard}>
-          <Text style={styles.currencyPrefix}>{currency}</Text>
-          <TextInput
-            style={styles.amountInput}
-            value={amount}
-            onChangeText={setAmount}
-            keyboardType="number-pad"
-            placeholder="0"
-            placeholderTextColor={theme.colors.mutedDark}
-          />
-        </View>
+      <Text style={[styles.section, isFundi && styles.fundiSection]}>{t(selectedMethod.phoneLabel)}</Text>
+      <View style={[styles.phoneInput, isFundi && styles.fundiInputCard]}>
+        <Text style={[styles.phonePrefix, isFundi && styles.fundiTextMuted]}>+256</Text>
+        <TextInput
+          style={[styles.phoneField, isFundi && styles.fundiText]}
+          value={phone}
+          onChangeText={setPhone}
+          keyboardType="phone-pad"
+          placeholder={selectedMethod.phonePlaceholder}
+          placeholderTextColor={isFundi ? fc.textSubtle : theme.colors.mutedDark}
+          maxLength={9}
+        />
+      </View>
+      <Text style={[styles.hint, isFundi && styles.fundiHint]}>
+        {t('Enter the {{method}} number to receive the deposit from. Your wallet is credited instantly.', {
+          method: selectedMethod.key === 'mtn' ? 'MTN MoMo' : 'Airtel Money',
+        })}
+      </Text>
 
-        <View style={styles.presets}>
-          {PRESETS.map((p) => {
-            const active = numericAmount === p;
-            return (
-              <TouchableOpacity
-                key={p}
-                style={[styles.presetBtn, active && styles.presetOn]}
-                activeOpacity={0.85}
-                onPress={() => handlePreset(p)}
-              >
-                <Text style={[styles.presetText, active && styles.presetTextOn]}>
-                  {currency} {p.toLocaleString()}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+      <PrimaryButton
+        onPress={handleDeposit}
+        loading={loading}
+        disabled={numericAmount <= 0}
+      >
+        {numericAmount > 0 ? t('Deposit {{amount}}', { amount: formatAmount(numericAmount) }) : t('Enter an amount')}
+      </PrimaryButton>
+    </ScrollView>
+  );
 
-        <Text style={styles.section}>{t(selectedMethod.phoneLabel)}</Text>
-        <View style={styles.phoneInput}>
-          <Text style={styles.phonePrefix}>+256</Text>
-          <TextInput
-            style={styles.phoneField}
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
-            placeholder={selectedMethod.phonePlaceholder}
-            placeholderTextColor={theme.colors.mutedDark}
-            maxLength={9}
-          />
-        </View>
-        <Text style={styles.hint}>
-          {t('Enter the {{method}} number to receive the deposit from. Your wallet is credited instantly.', {
-            method: selectedMethod.key === 'mtn' ? 'MTN MoMo' : 'Airtel Money',
-          })}
-        </Text>
+  if (isFundi) {
+    return (
+      <FundiThemedScreen title={t('Deposit')} onBack={() => onNavigate?.('wallet')}>
+        {content}
+      </FundiThemedScreen>
+    );
+  }
 
-        <PrimaryButton
-          onPress={handleDeposit}
-          loading={loading}
-          disabled={numericAmount <= 0}
-        >
-          {numericAmount > 0 ? t('Deposit {{amount}}', { amount: formatAmount(numericAmount) }) : t('Enter an amount')}
-        </PrimaryButton>
-      </ScrollView>
+  return (
+    <ScreenWrapper style={styles.safe}>
+      {content}
     </ScreenWrapper>
   );
 }
@@ -307,4 +324,19 @@ const styles = StyleSheet.create({
   phonePrefix: { color: theme.colors.mutedDark, fontWeight: '700', fontSize: 16, marginRight: 8 },
   phoneField: { color: theme.colors.white, fontSize: 16, fontWeight: '700', flex: 1, padding: 0 },
   hint: { color: theme.colors.mutedDark, fontSize: 12, marginBottom: 24 },
+
+  fundiText: { color: fc.text },
+  fundiTextMuted: { color: fc.textMuted },
+  fundiSection: { color: fc.textMuted },
+  fundiHint: { color: fc.textMuted },
+  fundiBalanceRow: {
+    backgroundColor: fc.card,
+    borderColor: fc.border,
+    ...fundiCardShadow,
+  },
+  fundiBalanceValue: { color: fc.text },
+  fundiCard: { backgroundColor: fc.card, borderColor: fc.border },
+  fundiInputCard: { backgroundColor: fc.card, borderColor: fc.border },
+  fundiPresetBtn: { backgroundColor: fc.card, borderColor: fc.border },
+  fundiPresetText: { color: fc.textMuted },
 });

@@ -2,10 +2,13 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import theme from '../theme';
+import { fc, fundiCardShadow } from '../fundiTheme';
 import ScreenWrapper from '../components/ScreenWrapper';
+import FundiThemedScreen from '../components/FundiThemedScreen';
 import { useLanguage } from '../i18n/LanguageContext';
 
-export default function HelpSupportScreen({ onNavigate }) {
+export default function HelpSupportScreen({ onNavigate, userRole = 'customer' }) {
+  const isFundi = userRole === 'fundi';
   const { t } = useLanguage();
   const faqs = [
     t('How do I book a service?'),
@@ -14,9 +17,9 @@ export default function HelpSupportScreen({ onNavigate }) {
     t('How to rate an artisan?'),
   ];
 
-  return (
-    <ScreenWrapper style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.container}>
+  const content = (
+    <ScrollView contentContainerStyle={styles.container}>
+      {!isFundi ? (
         <View style={styles.headerRow}>
           <TouchableOpacity onPress={() => onNavigate?.('profile')} style={styles.iconBtn}>
             <Ionicons name="chevron-back" size={20} color={theme.colors.white} />
@@ -24,46 +27,64 @@ export default function HelpSupportScreen({ onNavigate }) {
           <Text style={styles.title}>{t('Help & Support')}</Text>
           <View style={{ width: 40 }} />
         </View>
+      ) : null}
 
-        <View style={styles.searchRow}>
-          <Ionicons name="search-outline" size={18} color={theme.colors.muted} />
-          <TextInput placeholder={t('Search for help...')} placeholderTextColor={theme.colors.mutedDark} style={styles.searchInput} />
-        </View>
+      <View style={[styles.searchRow, isFundi && styles.fundiInputCard]}>
+        <Ionicons name="search-outline" size={18} color={isFundi ? fc.textMuted : theme.colors.muted} />
+        <TextInput
+          placeholder={t('Search for help...')}
+          placeholderTextColor={isFundi ? fc.textSubtle : theme.colors.mutedDark}
+          style={[styles.searchInput, isFundi && styles.fundiText]}
+        />
+      </View>
 
-        <Text style={styles.sectionLabel}>{t('Quick Actions')}</Text>
-        <View style={styles.quickRow}>
-          <TouchableOpacity style={styles.quickCard}><Ionicons name="flag-outline" size={20} color={theme.colors.accent} /><Text style={styles.quickText}>{t('Report Issue')}</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.quickCard}><Ionicons name="chatbubbles-outline" size={20} color={theme.colors.accent} /><Text style={styles.quickText}>{t('Chat Support')}</Text></TouchableOpacity>
-        </View>
+      <Text style={[styles.sectionLabel, isFundi && styles.fundiSection]}>{t('Quick Actions')}</Text>
+      <View style={styles.quickRow}>
+        <TouchableOpacity style={[styles.quickCard, isFundi && styles.fundiCard]}><Ionicons name="flag-outline" size={20} color={theme.colors.accent} /><Text style={[styles.quickText, isFundi && styles.fundiText]}>{t('Report Issue')}</Text></TouchableOpacity>
+        <TouchableOpacity style={[styles.quickCard, isFundi && styles.fundiCard]}><Ionicons name="chatbubbles-outline" size={20} color={theme.colors.accent} /><Text style={[styles.quickText, isFundi && styles.fundiText]}>{t('Chat Support')}</Text></TouchableOpacity>
+      </View>
 
-        <Text style={styles.sectionLabel}>{t('Frequently Asked')}</Text>
-        <View style={styles.card}>
-          {faqs.map((q) => (
-            <TouchableOpacity key={q} style={styles.faqRow}>
-              <Text style={styles.faqText}>{q}</Text>
-              <Ionicons name="chevron-forward" size={16} color={theme.colors.mutedDark} />
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <Text style={styles.sectionLabel}>{t('Contact Us')}</Text>
-        <View style={styles.card}>
-          <TouchableOpacity style={styles.contactRow}>
-            <View style={styles.contactLeft}>
-              <Ionicons name="mail-outline" size={16} color={theme.colors.accent} />
-              <Text style={styles.contactText}>{t('Email Support')}</Text>
-            </View>
-            <Text style={styles.contactSub}>support@fundlink.com</Text>
+      <Text style={[styles.sectionLabel, isFundi && styles.fundiSection]}>{t('Frequently Asked')}</Text>
+      <View style={[styles.card, isFundi && styles.fundiCard]}>
+        {faqs.map((q) => (
+          <TouchableOpacity key={q} style={[styles.faqRow, isFundi && styles.fundiRow]}>
+            <Text style={[styles.faqText, isFundi && styles.fundiText]}>{q}</Text>
+            <Ionicons name="chevron-forward" size={16} color={isFundi ? fc.textSubtle : theme.colors.mutedDark} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.contactRow}>
-            <View style={styles.contactLeft}>
-              <Ionicons name="call-outline" size={16} color={theme.colors.accent} />
-              <Text style={styles.contactText}>{t('Call Us')}</Text>
-            </View>
-            <Text style={styles.contactSub}>+256 700 123 456</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+        ))}
+      </View>
+
+      <Text style={[styles.sectionLabel, isFundi && styles.fundiSection]}>{t('Contact Us')}</Text>
+      <View style={[styles.card, isFundi && styles.fundiCard]}>
+        <TouchableOpacity style={[styles.contactRow, isFundi && styles.fundiRow]}>
+          <View style={styles.contactLeft}>
+            <Ionicons name="mail-outline" size={16} color={theme.colors.accent} />
+            <Text style={[styles.contactText, isFundi && styles.fundiText]}>{t('Email Support')}</Text>
+          </View>
+          <Text style={[styles.contactSub, isFundi && styles.fundiSub]}>support@fundlink.com</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.contactRow, isFundi && styles.fundiRow]}>
+          <View style={styles.contactLeft}>
+            <Ionicons name="call-outline" size={16} color={theme.colors.accent} />
+            <Text style={[styles.contactText, isFundi && styles.fundiText]}>{t('Call Us')}</Text>
+          </View>
+          <Text style={[styles.contactSub, isFundi && styles.fundiSub]}>+256 700 123 456</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
+  );
+
+  if (isFundi) {
+    return (
+      <FundiThemedScreen title={t('Help & Support')} onBack={() => onNavigate?.('profile')}>
+        {content}
+      </FundiThemedScreen>
+    );
+  }
+
+  return (
+    <ScreenWrapper style={styles.safe}>
+      {content}
     </ScreenWrapper>
   );
 }
@@ -91,4 +112,11 @@ const styles = StyleSheet.create({
   contactLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   contactText: { color: theme.colors.white, fontWeight: '800', fontSize: 14 },
   contactSub: { color: theme.colors.mutedDark, fontSize: 12, marginTop: 4, marginLeft: 24 },
+
+  fundiText: { color: fc.text },
+  fundiSub: { color: fc.textMuted },
+  fundiSection: { color: fc.textMuted },
+  fundiInputCard: { backgroundColor: fc.card, borderColor: fc.border, ...fundiCardShadow },
+  fundiCard: { backgroundColor: fc.card, borderColor: fc.border, ...fundiCardShadow },
+  fundiRow: { borderBottomColor: fc.border },
 });

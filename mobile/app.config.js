@@ -6,11 +6,7 @@ function googleIosUrlScheme() {
   if (process.env.EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME) {
     return process.env.EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME;
   }
-  const webClientId =
-    process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
-  if (!webClientId?.endsWith('.apps.googleusercontent.com')) return null;
-  const prefix = webClientId.replace('.apps.googleusercontent.com', '');
-  return `com.googleusercontent.apps.${prefix}`;
+  return null;
 }
 
 const iosUrlScheme = googleIosUrlScheme();
@@ -56,6 +52,10 @@ module.exports = {
       },
       permissions: ['ACCESS_FINE_LOCATION', 'ACCESS_COARSE_LOCATION'],
       softwareKeyboardLayoutMode: 'resize',
+      // Keep a solid, app-controlled navigation bar in release APKs. Expo SDK 54
+      // enables edge-to-edge by default, which can otherwise show the screen
+      // beneath the system buttons instead of this configured black bar.
+      edgeToEdgeEnabled: false,
       navigationBar: {
         backgroundColor: '#000000',
         barStyle: 'light-content',
@@ -80,6 +80,11 @@ module.exports = {
       'expo-web-browser',
       'expo-video',
       '@maplibre/maplibre-react-native',
+      // Native Google Sign-In removes the insecure exp:// OAuth callback.
+      // iOS needs its own reversed iOS-client scheme when that platform is enabled.
+      ...(iosUrlScheme
+        ? [['@react-native-google-signin/google-signin', { iosUrlScheme }]]
+        : []),
       [
         'expo-navigation-bar',
         {

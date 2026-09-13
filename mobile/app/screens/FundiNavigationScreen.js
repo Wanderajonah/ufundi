@@ -13,6 +13,7 @@ import ScreenWrapper from '../components/ScreenWrapper';
 import PrimaryButton from '../components/PrimaryButton';
 import FundiMap from '../components/FundiMap';
 import theme from '../theme';
+import { fc, fundiCardShadow } from '../fundiTheme';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -228,7 +229,7 @@ export default function FundiNavigationScreen({
           style={styles.closeBtn}
           onPress={() => onNavigate?.('fundiDashboard')}
         >
-          <Ionicons name="close" size={20} color={theme.colors.white} />
+          <Ionicons name="close" size={20} color={fc.text} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={styles.topLabel}>{t('Navigating to')}</Text>
@@ -297,9 +298,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 14,
     padding: 12,
     borderRadius: theme.radius.lg,
-    backgroundColor: theme.colors.panel,
+    backgroundColor: fc.card,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: fc.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
@@ -310,13 +311,13 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: theme.colors.input,
+    backgroundColor: fc.page,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  topLabel: { color: theme.colors.mutedDark, fontSize: 10, fontWeight: '800', letterSpacing: 0.8 },
-  topName: { color: theme.colors.white, fontSize: 15, fontWeight: '900', marginTop: 1 },
-  topAddress: { color: theme.colors.muted, fontSize: 12, marginTop: 2 },
+  topLabel: { color: fc.textMuted, fontSize: 10, fontWeight: '800', letterSpacing: 0.8 },
+  topName: { color: fc.text, fontSize: 15, fontWeight: '900', marginTop: 1 },
+  topAddress: { color: fc.textMuted, fontSize: 12, marginTop: 2 },
   warnBox: {
     position: 'absolute',
     left: 14,
@@ -330,7 +331,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,184,0,0.3)',
   },
-  warnText: { color: theme.colors.accent, fontSize: 12, fontWeight: '700', flex: 1 },
+  warnText: { color: fc.accentDark, fontSize: 12, fontWeight: '700', flex: 1 },
   bottomPanel: {
     position: 'absolute',
     left: 0,
@@ -338,9 +339,9 @@ const styles = StyleSheet.create({
     bottom: 0,
     paddingHorizontal: 16,
     paddingTop: 14,
-    backgroundColor: theme.colors.black,
+    backgroundColor: fc.card,
     borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
+    borderTopColor: fc.border,
   },
   etaRow: { flexDirection: 'row', gap: 10, marginBottom: 12 },
   etaChip: {
@@ -351,11 +352,11 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 10,
     borderRadius: theme.radius.md,
-    backgroundColor: theme.colors.input,
+    backgroundColor: fc.page,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: fc.border,
   },
-  etaValue: { color: theme.colors.white, fontSize: 16, fontWeight: '900' },
-  etaLabel: { color: theme.colors.mutedDark, fontSize: 11, fontWeight: '700' },
+  etaValue: { color: fc.text, fontSize: 16, fontWeight: '900' },
+  etaLabel: { color: fc.textMuted, fontSize: 11, fontWeight: '700' },
   arriveBtn: { height: 54 },
 });

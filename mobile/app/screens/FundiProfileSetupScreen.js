@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import ScrollScreen from '../components/ScrollScreen';
 import PrimaryButton from '../components/PrimaryButton';
 import theme from '../theme';
+import { fc, fundiCardShadow } from '../fundiTheme';
 import { updateProfile } from '../../services/usersApi';
 import { useLanguage } from '../i18n/LanguageContext';
 
@@ -67,9 +68,9 @@ export default function FundiProfileSetupScreen({ onBack, onComplete, authToken 
   };
 
   return (
-    <ScrollScreen keyboard contentStyle={styles.scroll} bottomPad={32}>
+    <ScrollScreen keyboard contentStyle={styles.scroll} bottomPad={32} variant="fundi">
       <TouchableOpacity style={styles.backRow} onPress={onBack}>
-        <Ionicons name="chevron-back" size={20} color={theme.colors.white} />
+        <Ionicons name="chevron-back" size={20} color={fc.text} />
       </TouchableOpacity>
 
       <Text style={styles.title}>{t('Set up your Fundi profile')}</Text>
@@ -108,7 +109,7 @@ export default function FundiProfileSetupScreen({ onBack, onComplete, authToken 
           onFocus={() => setCustomSkillFocused(true)}
           onBlur={() => setCustomSkillFocused(false)}
           placeholder={t('e.g. welding, tiling...')}
-          placeholderTextColor={theme.colors.mutedDark}
+          placeholderTextColor={fc.textSubtle}
           onSubmitEditing={addCustomSkill}
           returnKeyType="done"
           autoCorrect={false}
@@ -137,7 +138,7 @@ export default function FundiProfileSetupScreen({ onBack, onComplete, authToken 
         onChangeText={setExperience}
         keyboardType="number-pad"
         placeholder={t('e.g. 5')}
-        placeholderTextColor={theme.colors.mutedDark}
+        placeholderTextColor={fc.textSubtle}
       />
 
       <Text style={styles.label}>{t('Short bio (optional)')}</Text>
@@ -147,7 +148,7 @@ export default function FundiProfileSetupScreen({ onBack, onComplete, authToken 
         onChangeText={setBio}
         multiline
         placeholder={t('Describe your expertise...')}
-        placeholderTextColor={theme.colors.mutedDark}
+        placeholderTextColor={fc.textSubtle}
       />
 
       <PrimaryButton onPress={handleSave} disabled={loading}>
@@ -163,22 +164,23 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: theme.colors.input,
+    backgroundColor: fc.card,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: fc.border,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
+    ...fundiCardShadow,
   },
-  title: { color: theme.colors.white, fontSize: 26, fontWeight: '800', marginBottom: 8 },
+  title: { color: fc.text, fontSize: 26, fontWeight: '800', marginBottom: 8 },
   subtitle: {
-    color: theme.colors.muted,
+    color: fc.textMuted,
     fontSize: 14,
     lineHeight: 21,
     marginBottom: 32,
   },
   label: {
-    color: theme.colors.muted,
+    color: fc.textMuted,
     fontSize: theme.typography.caps,
     fontWeight: '700',
     letterSpacing: 0.6,
@@ -191,21 +193,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginBottom: 10,
-    backgroundColor: theme.colors.input,
+    backgroundColor: fc.card,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: fc.border,
     paddingLeft: 16,
     paddingVertical: 4,
+    ...fundiCardShadow,
   },
   customSkillRowFocused: {
     borderColor: theme.colors.accent,
-    backgroundColor: '#232323',
   },
   customSkillInput: {
     flex: 1,
     paddingVertical: 12,
-    color: theme.colors.white,
+    color: fc.text,
     fontSize: 15,
   },
   addBtn: {
@@ -220,7 +222,7 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   addBtnDisabled: {
-    backgroundColor: theme.colors.borderLight,
+    backgroundColor: fc.border,
     opacity: 0.6,
   },
   addBtnText: {
@@ -229,7 +231,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   customHint: {
-    color: theme.colors.muted,
+    color: fc.textMuted,
     fontSize: 12,
     lineHeight: 17,
     marginBottom: 24,
@@ -238,23 +240,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: theme.radius.pill,
-    backgroundColor: theme.colors.input,
+    backgroundColor: fc.card,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: fc.border,
   },
   chipOn: { backgroundColor: theme.colors.accent, borderColor: theme.colors.accent },
-  chipText: { color: theme.colors.muted, fontWeight: '700', fontSize: 13 },
+  chipText: { color: fc.textMuted, fontWeight: '700', fontSize: 13 },
   chipTextOn: { color: theme.colors.textDark },
   input: {
-    backgroundColor: theme.colors.input,
+    backgroundColor: fc.card,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: fc.border,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    color: theme.colors.white,
+    color: fc.text,
     fontSize: 16,
     marginBottom: 8,
+    ...fundiCardShadow,
   },
   textArea: { minHeight: 110, textAlignVertical: 'top', marginBottom: 16 },
 });

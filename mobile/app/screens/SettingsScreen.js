@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, Modal, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import theme from '../theme';
+import { fc, fundiCardShadow } from '../fundiTheme';
 import ScreenWrapper from '../components/ScreenWrapper';
+import FundiThemedScreen from '../components/FundiThemedScreen';
 import { useLanguage } from '../i18n/LanguageContext';
 import { LANGUAGES } from '../i18n/translations';
 import { enableFundi } from '../../services/usersApi';
 
-export default function SettingsScreen({ onNavigate, fundiEnabled, onFundiEnabled }) {
+export default function SettingsScreen({ onNavigate, userRole = 'customer', fundiEnabled, onFundiEnabled }) {
+  const isFundi = userRole === 'fundi';
   const { language, setLanguage, t } = useLanguage();
   const [langModal, setLangModal] = useState(false);
   const [enablingFundi, setEnablingFundi] = useState(false);
@@ -46,16 +49,18 @@ export default function SettingsScreen({ onNavigate, fundiEnabled, onFundiEnable
     );
   };
 
-  return (
-    <ScreenWrapper style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => onNavigate?.('profile')} style={styles.iconBtn}>
-            <Ionicons name="chevron-back" size={20} color={theme.colors.white} />
-          </TouchableOpacity>
-          <Text style={styles.title}>{t('Settings')}</Text>
-          <View style={{ width: 40 }} />
-        </View>
+  const content = (
+    <>
+      <ScrollView contentContainerStyle={[styles.container, isFundi && styles.containerFundi]}>
+        {!isFundi ? (
+          <View style={styles.headerRow}>
+            <TouchableOpacity onPress={() => onNavigate?.('profile')} style={styles.iconBtn}>
+              <Ionicons name="chevron-back" size={20} color={theme.colors.white} />
+            </TouchableOpacity>
+            <Text style={styles.title}>{t('Settings')}</Text>
+            <View style={{ width: 40 }} />
+          </View>
+        ) : null}
 
         {!fundiEnabled && (
           <>
@@ -76,36 +81,36 @@ export default function SettingsScreen({ onNavigate, fundiEnabled, onFundiEnable
           </>
         )}
 
-        <Text style={styles.sectionLabel}>{t('Notifications')}</Text>
-        <View style={styles.card}>
-          <View style={styles.row}><Text style={styles.rowText}>{t('Push Notifications')}</Text><Switch value trackColor={{ true: theme.colors.accent }} thumbColor={theme.colors.textDark} /></View>
-          <View style={styles.row}><Text style={styles.rowText}>{t('Email Notifications')}</Text><Switch value={false} trackColor={{ true: theme.colors.accent }} thumbColor={theme.colors.textDark} /></View>
-          <View style={styles.row}><Text style={styles.rowText}>{t('SMS Notifications')}</Text><Switch value trackColor={{ true: theme.colors.accent }} thumbColor={theme.colors.textDark} /></View>
+        <Text style={[styles.sectionLabel, isFundi && styles.sectionLabelFundi]}>{t('Notifications')}</Text>
+        <View style={[styles.card, isFundi && styles.cardFundi]}>
+          <View style={[styles.row, isFundi && styles.rowFundi]}><Text style={[styles.rowText, isFundi && styles.rowTextFundi]}>{t('Push Notifications')}</Text><Switch value trackColor={{ true: theme.colors.accent }} thumbColor={theme.colors.textDark} /></View>
+          <View style={[styles.row, isFundi && styles.rowFundi]}><Text style={[styles.rowText, isFundi && styles.rowTextFundi]}>{t('Email Notifications')}</Text><Switch value={false} trackColor={{ true: theme.colors.accent }} thumbColor={theme.colors.textDark} /></View>
+          <View style={[styles.row, isFundi && styles.rowFundi]}><Text style={[styles.rowText, isFundi && styles.rowTextFundi]}>{t('SMS Notifications')}</Text><Switch value trackColor={{ true: theme.colors.accent }} thumbColor={theme.colors.textDark} /></View>
         </View>
 
-        <Text style={styles.sectionLabel}>{t('Privacy')}</Text>
-        <View style={styles.card}>
-          <View style={styles.row}><Text style={styles.rowText}>{t('Share Location')}</Text><Switch value trackColor={{ true: theme.colors.accent }} thumbColor={theme.colors.textDark} /></View>
-          <TouchableOpacity style={styles.row}><Text style={styles.rowText}>{t('Profile Visibility')}</Text><Ionicons name="chevron-forward" size={16} color={theme.colors.mutedDark} /></TouchableOpacity>
+        <Text style={[styles.sectionLabel, isFundi && styles.sectionLabelFundi]}>{t('Privacy')}</Text>
+        <View style={[styles.card, isFundi && styles.cardFundi]}>
+          <View style={[styles.row, isFundi && styles.rowFundi]}><Text style={[styles.rowText, isFundi && styles.rowTextFundi]}>{t('Share Location')}</Text><Switch value trackColor={{ true: theme.colors.accent }} thumbColor={theme.colors.textDark} /></View>
+          <TouchableOpacity style={[styles.row, isFundi && styles.rowFundi]}><Text style={[styles.rowText, isFundi && styles.rowTextFundi]}>{t('Profile Visibility')}</Text><Ionicons name="chevron-forward" size={16} color={isFundi ? fc.textMuted : theme.colors.mutedDark} /></TouchableOpacity>
         </View>
 
-        <Text style={styles.sectionLabel}>{t('App Settings')}</Text>
-        <View style={styles.card}>
-          <TouchableOpacity style={styles.row} onPress={() => setLangModal(true)}>
-            <Text style={styles.rowText}>{t('Language')}</Text>
+        <Text style={[styles.sectionLabel, isFundi && styles.sectionLabelFundi]}>{t('App Settings')}</Text>
+        <View style={[styles.card, isFundi && styles.cardFundi]}>
+          <TouchableOpacity style={[styles.row, isFundi && styles.rowFundi]} onPress={() => setLangModal(true)}>
+            <Text style={[styles.rowText, isFundi && styles.rowTextFundi]}>{t('Language')}</Text>
             <View style={styles.valueRow}>
-              <Text style={styles.valueText}>{current.native}</Text>
-              <Ionicons name="chevron-forward" size={16} color={theme.colors.mutedDark} />
+              <Text style={[styles.valueText, isFundi && styles.valueTextFundi]}>{current.native}</Text>
+              <Ionicons name="chevron-forward" size={16} color={isFundi ? fc.textMuted : theme.colors.mutedDark} />
             </View>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.row}><Text style={styles.rowText}>{t('Currency')}</Text><Text style={styles.valueText}>UGX</Text></TouchableOpacity>
-          <View style={styles.row}><Text style={styles.rowText}>{t('Dark Mode')}</Text><Switch value trackColor={{ true: theme.colors.accent }} thumbColor={theme.colors.textDark} /></View>
+          <TouchableOpacity style={[styles.row, isFundi && styles.rowFundi]}><Text style={[styles.rowText, isFundi && styles.rowTextFundi]}>{t('Currency')}</Text><Text style={[styles.valueText, isFundi && styles.valueTextFundi]}>UGX</Text></TouchableOpacity>
+          <View style={[styles.row, isFundi && styles.rowFundi]}><Text style={[styles.rowText, isFundi && styles.rowTextFundi]}>{t('Dark Mode')}</Text><Switch value trackColor={{ true: theme.colors.accent }} thumbColor={theme.colors.textDark} /></View>
         </View>
 
-        <Text style={styles.sectionLabel}>{t('Legal')}</Text>
-        <View style={styles.card}>
-          <TouchableOpacity style={styles.row}><Text style={styles.rowText}>{t('Terms & Conditions')}</Text><Ionicons name="chevron-forward" size={16} color={theme.colors.mutedDark} /></TouchableOpacity>
-          <TouchableOpacity style={styles.row}><Text style={styles.rowText}>{t('Privacy Policy')}</Text><Ionicons name="chevron-forward" size={16} color={theme.colors.mutedDark} /></TouchableOpacity>
+        <Text style={[styles.sectionLabel, isFundi && styles.sectionLabelFundi]}>{t('Legal')}</Text>
+        <View style={[styles.card, isFundi && styles.cardFundi]}>
+          <TouchableOpacity style={[styles.row, isFundi && styles.rowFundi]}><Text style={[styles.rowText, isFundi && styles.rowTextFundi]}>{t('Terms & Conditions')}</Text><Ionicons name="chevron-forward" size={16} color={isFundi ? fc.textMuted : theme.colors.mutedDark} /></TouchableOpacity>
+          <TouchableOpacity style={[styles.row, isFundi && styles.rowFundi]}><Text style={[styles.rowText, isFundi && styles.rowTextFundi]}>{t('Privacy Policy')}</Text><Ionicons name="chevron-forward" size={16} color={isFundi ? fc.textMuted : theme.colors.mutedDark} /></TouchableOpacity>
         </View>
       </ScrollView>
 
@@ -133,6 +138,20 @@ export default function SettingsScreen({ onNavigate, fundiEnabled, onFundiEnable
           </View>
         </View>
       </Modal>
+    </>
+  );
+
+  if (isFundi) {
+    return (
+      <FundiThemedScreen title={t('Settings')} onBack={() => onNavigate?.('profile')} scroll={false} contentStyle={{ paddingTop: 0 }}>
+        {content}
+      </FundiThemedScreen>
+    );
+  }
+
+  return (
+    <ScreenWrapper style={styles.safe}>
+      {content}
     </ScreenWrapper>
   );
 }
@@ -162,4 +181,15 @@ const styles = StyleSheet.create({
   langSub: { color: theme.colors.mutedDark, fontSize: 12, flex: 1, marginLeft: 8 },
   modalCancel: { marginTop: 8, alignItems: 'center', paddingVertical: 12 },
   modalCancelText: { color: theme.colors.muted, fontWeight: '700', fontSize: 14 },
+
+  containerFundi: { paddingTop: 8 },
+  sectionLabelFundi: { color: fc.textMuted },
+  cardFundi: {
+    backgroundColor: fc.card,
+    borderColor: fc.border,
+    ...fundiCardShadow,
+  },
+  rowFundi: { borderBottomColor: fc.border },
+  rowTextFundi: { color: fc.text },
+  valueTextFundi: { color: fc.textMuted },
 });

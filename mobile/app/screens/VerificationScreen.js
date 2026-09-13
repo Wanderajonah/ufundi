@@ -10,20 +10,37 @@ import {
   Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import theme from '../theme';
 import ScreenWrapper from '../components/ScreenWrapper';
 import { getProfile, requestVerification } from '../../services/usersApi';
 import { resolveMediaUrl } from '../../utils/image';
 import { useLanguage } from '../i18n/LanguageContext';
 
-const STATUS_MAP = {
-  unverified: { label: 'Not Verified', color: theme.colors.mutedDark, icon: 'shield-checkmark-outline' },
-  pending: { label: 'Verification Pending', color: theme.colors.accent, icon: 'time-outline' },
-  verified: { label: 'Verified', color: theme.colors.green, icon: 'shield-checkmark' },
-  rejected: { label: 'Rejected', color: theme.colors.red, icon: 'shield-outline' },
+const C = {
+  page: theme.colors.bgLight,
+  card: '#FFFFFF',
+  border: '#E4E4E0',
+  dashboard: '#1A1A1A',
+  text: '#1A1A1A',
+  muted: '#6B6B68',
+  amber: '#FAEEDA',
+  amberDark: '#854F0B',
+  blue: '#E6F1FB',
+  blueDark: '#185FA5',
+  pillGray: '#EDEDEA',
+  dashed: '#C9C9C4',
 };
+
+const STATUS_MAP = {
+  unverified: { label: 'Not verified', color: C.amberDark, bg: C.amber, icon: 'shield-checkmark-outline' },
+  pending:    { label: 'Verification pending', color: '#B45309', bg: '#FDF0DF', icon: 'time-outline' },
+  verified:   { label: 'Verified', color: '#177245', bg: '#E4F3E8', icon: 'shield-checkmark' },
+  rejected:   { label: 'Rejected', color: '#B42318', bg: '#FBE8E6', icon: 'shield-outline' },
+};
+
+const MAX_DOCS = 5;
 
 const EXT_TO_MIME = {
   jpg: 'image/jpeg',
@@ -46,6 +63,7 @@ const documentUpload = (asset) => {
 
 export default function VerificationScreen({ onNavigate }) {
   const { t } = useLanguage();
+  const insets = useSafeAreaInsets();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -83,7 +101,7 @@ export default function VerificationScreen({ onNavigate }) {
       setSelectedDocs((prev) => {
         const existing = new Set(prev.map((d) => d.uri || d.name));
         const newDocs = result.assets.filter((d) => !existing.has(d.uri || d.name));
-        return [...prev, ...newDocs].slice(0, 5);
+        return [...prev, ...newDocs].slice(0, MAX_DOCS);
       });
     } catch {
       Alert.alert(t('Error'), t('Could not pick documents.'));
@@ -116,198 +134,300 @@ export default function VerificationScreen({ onNavigate }) {
     }
   };
 
+  const statusSub =
+    status === 'verified'
+      ? t('Your identity has been verified. Clients can trust you with confidence.')
+      : status === 'pending'
+        ? t('Your documents are being reviewed. This usually takes 1-2 business days.')
+        : status === 'rejected'
+          ? fundiProfile.verificationNotes || t('Your verification was rejected. Please submit new documents.')
+          : t('Verification is required before clients can see you, you appear on the map, or you can receive job requests.');
+
   return (
-    <ScreenWrapper style={styles.safe} edges={['top', 'left', 'right']}>
-      <View style={styles.container}>
+    <ScreenWrapper
+      variant="fundi"
+      edges={['top', 'left', 'right']}
+      statusStripColor={theme.colors.black}
+    >
+      <View style={{ flex: 1 }}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => onNavigate?.('profile')} style={styles.backBtn}>
-            <Ionicons name="chevron-back" size={20} color={theme.colors.white} />
-          </TouchableOpacity>
-          <Text style={styles.title}>{t('Verification')}</Text>
-          <View style={{ width: 40 }} />
+          <View style={styles.headerRow}>
+            <TouchableOpacity
+              style={styles.backBtn}
+              onPress={() => onNavigate?.('profile')}
+              activeOpacity={0.7}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="arrow-back" size={18} color={C.card} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>{t('Verification')}</Text>
+            <View style={styles.headerSpacer} />
+          </View>
+          <View style={styles.headerDivider} />
         </View>
 
         {loading ? (
           <View style={styles.loadingWrap}>
-            <ActivityIndicator color={theme.colors.accent} size="large" />
+            <ActivityIndicator color="#854F0B" size="large" />
           </View>
         ) : (
-          <ScrollView showsVerticalScrollIndicator={false}>
-            <View style={styles.statusCard}>
-              <Ionicons name={statusInfo.icon} size={40} color={statusInfo.color} />
-              <Text style={[styles.statusLabel, { color: statusInfo.color }]}>{t(statusInfo.label)}</Text>
-              {status === 'verified' && (
-                <Text style={styles.statusSub}>{t('Your identity has been verified. Clients can trust you with confidence.')}</Text>
-              )}
-              {status === 'pending' && (
-                <Text style={styles.statusSub}>{t('Your documents are being reviewed. This usually takes 1-2 business days.')}</Text>
-              )}
-              {status === 'rejected' && (
-                <Text style={styles.statusSub}>
-                  {fundiProfile.verificationNotes || t('Your verification was rejected. Please submit new documents.')}
-                </Text>
-              )}
-              {status === 'unverified' && (
-                <Text style={styles.statusSub}>{t('Verify your identity to build trust with clients and get more bookings.')}</Text>
-              )}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scroll}
+          >
+          {/* Status */}
+          <View style={styles.statusCard}>
+            <View style={[styles.statusIconWrap, { backgroundColor: statusInfo.bg }]}>
+              <Ionicons name={statusInfo.icon} size={28} color={statusInfo.color} />
             </View>
+            <View style={[styles.statusPill, { backgroundColor: statusInfo.bg }]}>
+              <Text style={[styles.statusPillText, { color: statusInfo.color }]}>{t(statusInfo.label)}</Text>
+            </View>
+            <Text style={styles.statusSub}>{statusSub}</Text>
+          </View>
 
-            {(status === 'unverified' || status === 'rejected') && (
-              <>
-                <Text style={styles.sectionTitle}>{t('Upload Documents')}</Text>
-                <Text style={styles.hint}>
-                  {t('Upload a photo or PDF of your national ID, business license, or any official document')}
-                </Text>
-
-                <TouchableOpacity style={styles.uploadBtn} onPress={pickDocuments} activeOpacity={0.85}>
-                  <Ionicons name="document-attach-outline" size={20} color={theme.colors.textDark} />
-                  <Text style={styles.uploadText}>{t('Select Images or PDF')}</Text>
-                </TouchableOpacity>
-
-                {selectedDocs.length > 0 && (
-                  <View style={styles.docsPreview}>
-                    {selectedDocs.map((doc, idx) => {
-                      const isPdf = doc.mimeType === 'application/pdf' || doc.name?.endsWith('.pdf');
-                      return (
-                        <View key={doc.uri || doc.name || idx} style={styles.docItem}>
-                          {isPdf ? (
-                            <View style={[styles.docThumb, styles.pdfIcon]}>
-                              <Ionicons name="document-text" size={22} color={theme.colors.accent} />
-                            </View>
-                          ) : (
-                            <Image source={{ uri: doc.uri }} style={styles.docThumb} />
-                          )}
-                          <Text style={styles.docName} numberOfLines={1}>{doc.name || t('Document {{num}}', { num: idx + 1 })}</Text>
-                          <TouchableOpacity onPress={() => removeDoc(doc)}>
-                            <Ionicons name="close-circle" size={20} color={theme.colors.red} />
-                          </TouchableOpacity>
-                        </View>
-                      );
-                    })}
-                  </View>
-                )}
-
-                <TouchableOpacity
-                  style={[styles.submitBtn, (!selectedDocs.length || submitting) && { opacity: 0.5 }]}
-                  onPress={handleSubmit}
-                  disabled={!selectedDocs.length || submitting}
-                  activeOpacity={0.85}
-                >
-                  {submitting ? (
-                    <ActivityIndicator color={theme.colors.textDark} size="small" />
-                  ) : (
-                    <Text style={styles.submitText}>{t('Submit for Review')}</Text>
-                  )}
-                </TouchableOpacity>
-              </>
-            )}
-
-            {status === 'pending' && docs.length > 0 && (
-              <>
-                <Text style={styles.sectionTitle}>{t('Submitted Documents')}</Text>
-                <View style={styles.docsPreview}>
-                  {docs.map((url, idx) => (
-                    <Image key={`${url}-${idx}`} source={{ uri: resolveMediaUrl(url) }} style={styles.submittedDoc} />
-                  ))}
-                </View>
-              </>
-            )}
-
-            <View style={styles.infoCard}>
-              <Ionicons name="information-circle-outline" size={18} color={theme.colors.accent} />
-              <Text style={styles.infoText}>
-                {t('Verification helps clients trust your profile. Verified fundis appear higher in search results. You can upload images or PDF documents.')}
+          {/* Identity documents */}
+          {(status === 'unverified' || status === 'rejected') && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>{t('Identity documents')}</Text>
+              <Text style={styles.sectionHint}>
+                {t('Upload a photo or PDF of your national ID, business license, or any official document')}
               </Text>
+
+              <TouchableOpacity style={styles.pickCard} onPress={pickDocuments} activeOpacity={0.85}>
+                <View style={styles.pickIcon}>
+                  <Ionicons name="cloud-upload-outline" size={24} color={C.blueDark} />
+                </View>
+                <View style={styles.pickTextWrap}>
+                  <Text style={styles.pickTitle}>{t('Select images or PDF')}</Text>
+                  <Text style={styles.pickSub}>{t('Up to {{max}} documents', { max: MAX_DOCS })}</Text>
+                </View>
+                <View style={styles.counterPill}>
+                  <Text style={styles.counterText}>{selectedDocs.length}/{MAX_DOCS}</Text>
+                </View>
+              </TouchableOpacity>
+
+              {selectedDocs.length > 0 && (
+                <View style={styles.docsList}>
+                  {selectedDocs.map((doc, idx) => {
+                    const isPdf = doc.mimeType === 'application/pdf' || doc.name?.endsWith('.pdf');
+                    return (
+                      <View key={doc.uri || doc.name || idx} style={styles.docItem}>
+                        {isPdf ? (
+                          <View style={[styles.docThumb, styles.pdfIcon]}>
+                            <Ionicons name="document-text" size={20} color="#854F0B" />
+                          </View>
+                        ) : (
+                          <Image source={{ uri: doc.uri }} style={styles.docThumb} />
+                        )}
+                        <Text style={styles.docName} numberOfLines={1}>
+                          {doc.name || t('Document {{num}}', { num: idx + 1 })}
+                        </Text>
+                        <TouchableOpacity
+                          onPress={() => removeDoc(doc)}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        >
+                          <Ionicons name="close-circle" size={22} color={theme.colors.red} />
+                        </TouchableOpacity>
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
+
+              <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} activeOpacity={0.9}>
+                {submitting ? (
+                  <ActivityIndicator color={C.card} size="small" />
+                ) : (
+                  <Text style={styles.submitText}>{t('Submit for review')}</Text>
+                )}
+              </TouchableOpacity>
             </View>
-          </ScrollView>
+          )}
+
+          {/* Submitted docs */}
+          {status === 'pending' && docs.length > 0 && (
+            <View style={[styles.section, { paddingTop: 0 }]}>
+              <Text style={styles.sectionTitle}>{t('Submitted documents')}</Text>
+              <View style={styles.submittedList}>
+                {docs.map((url, idx) => (
+                  <Image
+                    key={`${url}-${idx}`}
+                    source={{ uri: resolveMediaUrl(url) }}
+                    style={styles.submittedDoc}
+                    resizeMode="cover"
+                  />
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* Info banner */}
+          <View style={styles.infoBanner}>
+            <Ionicons name="information-circle-outline" size={17} color={C.blueDark} />
+            <Text style={styles.infoText}>
+              {t('Only verified fundis are shown to clients and can access client jobs.')}
+            </Text>
+          </View>
+        </ScrollView>
         )}
+        <View style={{ height: insets.bottom, backgroundColor: theme.colors.black }} />
       </View>
     </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: theme.colors.black },
-  container: { flex: 1, paddingHorizontal: 20, paddingTop: 12 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
-  backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: theme.colors.input,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    justifyContent: 'center',
+  header: { backgroundColor: C.dashboard },
+  headerRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 12,
   },
-  title: { color: theme.colors.white, fontSize: 20, fontWeight: '800' },
+  backBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerSpacer: { width: 34, height: 34 },
+  headerTitle: {
+    flex: 1,
+    textAlign: 'center',
+    color: C.card,
+    fontSize: 18,
+    fontWeight: '500',
+  },
+  headerDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.12)' },
+
   loadingWrap: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+
+  scroll: {
+    paddingHorizontal: 16,
+    paddingTop: 24,
+    paddingBottom: 36,
+  },
 
   statusCard: {
     alignItems: 'center',
-    backgroundColor: theme.colors.panel,
-    borderRadius: theme.radius.lg,
+    backgroundColor: C.card,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    padding: 24,
-    marginBottom: 20,
-    gap: 12,
+    borderColor: C.border,
+    paddingVertical: 28,
+    paddingHorizontal: 20,
   },
-  statusLabel: { fontSize: 18, fontWeight: '900' },
-  statusSub: { color: theme.colors.muted, fontSize: 13, textAlign: 'center', lineHeight: 18 },
-
-  sectionTitle: { color: theme.colors.white, fontWeight: '800', fontSize: 15, marginBottom: 8 },
-  hint: { color: theme.colors.mutedDark, fontSize: 12, marginBottom: 14, lineHeight: 16 },
-
-  uploadBtn: {
-    flexDirection: 'row',
+  statusIconWrap: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    backgroundColor: theme.colors.accent,
-    height: 52,
-    borderRadius: theme.radius.pill,
-    marginBottom: 16,
   },
-  uploadText: { color: theme.colors.textDark, fontWeight: '800', fontSize: 15 },
+  statusPill: {
+    marginTop: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 999,
+  },
+  statusPillText: { fontSize: 12, fontWeight: '600', letterSpacing: 0.2 },
+  statusSub: {
+    marginTop: 10,
+    color: C.muted,
+    fontSize: 14,
+    lineHeight: 22,
+    textAlign: 'center',
+    paddingHorizontal: 6,
+  },
 
-  docsPreview: { gap: 8, marginBottom: 16 },
+  section: { marginTop: 24 },
+  sectionTitle: { color: C.text, fontSize: 15, fontWeight: '500' },
+  sectionHint: {
+    color: C.muted,
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 6,
+    marginBottom: 14,
+  },
+
+  pickCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: C.card,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: C.dashed,
+    padding: 14,
+  },
+  pickIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 10,
+    backgroundColor: C.blue,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pickTextWrap: { flex: 1, marginLeft: 12 },
+  pickTitle: { color: C.text, fontSize: 14, fontWeight: '500' },
+  pickSub: { color: C.muted, fontSize: 12, marginTop: 2 },
+  counterPill: {
+    backgroundColor: C.pillGray,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+  },
+  counterText: { color: C.muted, fontSize: 12, fontWeight: '600' },
+
+  docsList: { gap: 10, marginTop: 14 },
   docItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    backgroundColor: theme.colors.input,
-    borderRadius: theme.radius.md,
-    padding: 10,
+    backgroundColor: C.card,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: C.border,
+    padding: 10,
   },
-  docThumb: { width: 40, height: 40, borderRadius: 8 },
-  pdfIcon: { backgroundColor: theme.colors.accentDim, justifyContent: 'center', alignItems: 'center' },
-  docName: { flex: 1, color: theme.colors.white, fontSize: 13 },
+  docThumb: {
+    width: 48,
+    height: 48,
+    borderRadius: 8,
+    backgroundColor: C.page,
+    marginRight: 12,
+  },
+  pdfIcon: { alignItems: 'center', justifyContent: 'center', backgroundColor: C.amber },
+  docName: { flex: 1, color: C.text, fontSize: 13, fontWeight: '500' },
 
   submitBtn: {
-    backgroundColor: theme.colors.accent,
-    height: 52,
-    borderRadius: theme.radius.pill,
+    height: 48,
+    borderRadius: theme.buttons.radius.lg,
+    backgroundColor: C.dashboard,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
+    marginTop: 20,
   },
-  submitText: { color: theme.colors.textDark, fontWeight: '800', fontSize: 16 },
+  submitText: { color: C.card, fontSize: 15, fontWeight: '700' },
 
-  submittedDoc: { width: '100%', height: 160, borderRadius: theme.radius.md, marginBottom: 8 },
+  submittedList: { gap: 12, marginTop: 12 },
+  submittedDoc: {
+    width: '100%',
+    height: 150,
+    borderRadius: 12,
+    backgroundColor: C.page,
+  },
 
-  infoCard: {
+  infoBanner: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-    backgroundColor: theme.colors.accentDim,
-    borderRadius: theme.radius.md,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(255,184,0,0.2)',
-    marginBottom: 20,
+    alignItems: 'center',
+    backgroundColor: C.blue,
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 24,
   },
-  infoText: { color: theme.colors.muted, fontSize: 12, lineHeight: 17, flex: 1 },
+  infoText: { color: C.muted, fontSize: 13, lineHeight: 18, flex: 1, marginLeft: 8 },
 });

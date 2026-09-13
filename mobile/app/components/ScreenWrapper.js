@@ -1,6 +1,9 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { StyleSheet, View } from 'react-native';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import theme from '../theme';
 
 /**
@@ -9,9 +12,25 @@ import theme from '../theme';
  *   Pass edges without 'bottom' (e.g. ['top','left','right']) on screens that
  *   sit above the bottom navigation bar, which applies its own inset.
  */
-export default function ScreenWrapper({ children, style, edges = ['top', 'left', 'right', 'bottom'] }) {
+export default function ScreenWrapper({
+  children,
+  style,
+  edges = ['top', 'left', 'right', 'bottom'],
+  variant = 'dark',
+  statusStripColor,
+}) {
+  const insets = useSafeAreaInsets();
+  const bg =
+    variant === 'fundi' ? theme.colors.bgLight : theme.colors.black;
+
   return (
-    <SafeAreaView style={[styles.safe, style]} edges={edges}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: bg }, style]} edges={edges}>
+      {edges.includes('top') && insets.top > 0 ? (
+        <View
+          pointerEvents="none"
+          style={[styles.statusStrip, { height: insets.top, backgroundColor: statusStripColor || theme.colors.black }]}
+        />
+      ) : null}
       {children}
     </SafeAreaView>
   );
@@ -20,6 +39,12 @@ export default function ScreenWrapper({ children, style, edges = ['top', 'left',
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
+  },
+  statusStrip: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     backgroundColor: theme.colors.black,
   },
 });

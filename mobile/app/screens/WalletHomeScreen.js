@@ -4,14 +4,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import theme from '../theme';
+import { fc, fundiCardShadow } from '../fundiTheme';
 import ScreenWrapper from '../components/ScreenWrapper';
-import LoadingSkeleton from '../components/LoadingSkeleton';
+import FundiThemedScreen from '../components/FundiThemedScreen';
+import { WalletSkeleton } from '../components/LoadingSkeleton';
 import EmptyState from '../components/EmptyState';
 import PrimaryButton from '../components/PrimaryButton';
 import { getWallet, getTransactions } from '../../services/walletApi';
 import { useLanguage } from '../i18n/LanguageContext';
 
-export default function WalletHomeScreen({ onNavigate }) {
+export default function WalletHomeScreen({ onNavigate, userRole = 'customer' }) {
+  const isFundi = userRole === 'fundi';
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const [wallet, setWallet] = useState(null);
@@ -77,29 +80,45 @@ export default function WalletHomeScreen({ onNavigate }) {
     { key: 'history', label: t('History'), icon: 'time-outline', color: theme.colors.accent },
   ];
 
-  return (
-    <ScreenWrapper style={styles.safe} edges={['top', 'left', 'right']}>
+  const pageTitle = isFundi ? t('Earnings') : t('Wallet');
+
+  if (isFundi) {
+    return (
+      <FundiEarningsScreen
+        balance={wallet?.balance || 0}
+        currency={wallet?.currency || 'UGX'}
+        hidden={hidden}
+        loading={loading}
+        onCashOut={() => onNavigate?.('withdraw')}
+      />
+    );
+  }
+
+  const content = (
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 100 }]}
+        contentContainerStyle={[
+          isFundi ? styles.fundiScroll : styles.scroll,
+          { paddingBottom: insets.bottom + 100 },
+        ]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.accent} />}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <Text style={styles.title}>{t('Wallet')}</Text>
-          <TouchableOpacity style={styles.historyBtn} onPress={() => onNavigate?.('transactionHistory')}>
-            <Ionicons name="receipt-outline" size={20} color={theme.colors.accent} />
-          </TouchableOpacity>
-        </View>
+        {!isFundi ? (
+          <View style={styles.header}>
+            <Text style={styles.title}>{pageTitle}</Text>
+            <TouchableOpacity style={styles.historyBtn} onPress={() => onNavigate?.('transactionHistory')}>
+              <Ionicons name="receipt-outline" size={20} color={theme.colors.accent} />
+            </TouchableOpacity>
+          </View>
+        ) : null}
 
         {loading ? (
-          <View style={{ marginHorizontal: -16 }}>
-            <LoadingSkeleton count={2} />
-          </View>
+          <WalletSkeleton variant={isFundi ? 'fundi' : 'dark'} />
         ) : (
           <>
             <LinearGradient
-              colors={['#3A2A0F', '#1A1A1A']}
-              style={styles.balanceCard}
+              colors={isFundi ? [fc.card, fc.card] : ['#3A2A0F', '#1A1A1A']}
+              style={[styles.balanceCard, isFundi && styles.fundiBalanceCard]}
             >
               <View style={styles.balanceTop}>
                 <View style={styles.walletIconWrap}>
@@ -117,8 +136,12 @@ export default function WalletHomeScreen({ onNavigate }) {
                   />
                 </TouchableOpacity>
               </View>
-              <Text style={styles.balanceLabel}>{t('Available Balance')}</Text>
-              <Text style={styles.balanceAmount}>{maskAmount(wallet?.balance)}</Text>
+              <Text style={[styles.balanceLabel, isFundi && styles.fundiBalanceLabel]}>
+                {t('Available Balance')}
+              </Text>
+              <Text style={[styles.balanceAmount, isFundi && styles.fundiBalanceAmount]}>
+                {maskAmount(wallet?.balance)}
+              </Text>
               <View style={styles.statusRow}>
                 <View
                   style={[
@@ -131,7 +154,7 @@ export default function WalletHomeScreen({ onNavigate }) {
                     },
                   ]}
                 />
-                <Text style={styles.statusText}>
+                <Text style={[styles.statusText, isFundi && styles.fundiStatusText]}>
                   {wallet?.status === 'active' ? t('Active') : t('Frozen')}
                 </Text>
               </View>
@@ -141,7 +164,7 @@ export default function WalletHomeScreen({ onNavigate }) {
               {quickActions.map((a) => (
                 <TouchableOpacity
                   key={a.key}
-                  style={styles.actionBtn}
+                  style={[styles.actionBtn, isFundi && styles.fundiActionBtn]}
                   onPress={() => {
                     if (a.key === 'history') return onNavigate?.('transactionHistory');
                     return onNavigate?.(a.key);
@@ -150,13 +173,15 @@ export default function WalletHomeScreen({ onNavigate }) {
                   <View style={[styles.actionIcon, { backgroundColor: a.color + '20' }]}>
                     <Ionicons name={a.icon} size={22} color={a.color} />
                   </View>
-                  <Text style={styles.actionLabel}>{a.label}</Text>
+                  <Text style={[styles.actionLabel, isFundi && styles.fundiActionLabel]}>{a.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
 
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>{t('Recent Transactions')}</Text>
+              <Text style={[styles.sectionTitle, isFundi && styles.fundiSectionTitle]}>
+                {t('Recent Transactions')}
+              </Text>
               <TouchableOpacity onPress={() => onNavigate?.('transactionHistory')}>
                 <Text style={styles.viewAll}>{t('View All')}</Text>
               </TouchableOpacity>
@@ -166,6 +191,7 @@ export default function WalletHomeScreen({ onNavigate }) {
               <View style={styles.emptyWrap}>
                 <EmptyState
                   icon="receipt-outline"
+                  variant={isFundi ? 'fundi' : 'dark'}
                   title={t('No transactions yet')}
                   message={t('Your deposits, transfers and payments will appear here.')}
                 />
@@ -179,13 +205,17 @@ export default function WalletHomeScreen({ onNavigate }) {
               </View>
             ) : (
               recentTx.map((tx) => (
-                <View key={tx._id} style={styles.txRow}>
+                <View key={tx._id} style={[styles.txRow, isFundi && styles.fundiTxRow]}>
                   <View style={[styles.txIcon, { backgroundColor: txColor(tx.type) + '20' }]}>
                     <Ionicons name={txIcon(tx.type)} size={18} color={txColor(tx.type)} />
                   </View>
                   <View style={styles.txInfo}>
-                    <Text style={styles.txDesc} numberOfLines={1}>{tx.description}</Text>
-                    <Text style={styles.txDate}>{formatDate(tx.createdAt)}</Text>
+                    <Text style={[styles.txDesc, isFundi && styles.fundiTxDesc]} numberOfLines={1}>
+                      {tx.description}
+                    </Text>
+                    <Text style={[styles.txDate, isFundi && styles.fundiTxDate]}>
+                      {formatDate(tx.createdAt)}
+                    </Text>
                   </View>
                   <View style={styles.txAmount}>
                     <Text style={[styles.txValue, { color: txColor(tx.type) }]}>
@@ -199,11 +229,119 @@ export default function WalletHomeScreen({ onNavigate }) {
           </>
         )}
       </ScrollView>
+  );
+
+  if (isFundi) {
+    return (
+      <FundiThemedScreen
+        title={pageTitle}
+        rightIcon="receipt-outline"
+        onRightPress={() => onNavigate?.('transactionHistory')}
+        scroll={false}
+        contentStyle={{ paddingTop: 0, paddingHorizontal: 0 }}
+      >
+        {content}
+      </FundiThemedScreen>
+    );
+  }
+
+  return (
+    <ScreenWrapper style={styles.safe} edges={['top', 'left', 'right']}>
+      {content}
+    </ScreenWrapper>
+  );
+}
+
+function FundiEarningsScreen({ balance, currency, hidden, loading, onCashOut }) {
+  const chart = [77, 52, 87, 45, 86, 70, 41];
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Today'];
+  const available = hidden ? '••••••' : `${currency} ${balance.toLocaleString()}`;
+
+  return (
+    <ScreenWrapper
+      edges={['top', 'left', 'right']}
+      style={styles.earningsSafe}
+      statusStripColor="#000000"
+    >
+      <View style={styles.earningsPage}>
+        <View style={styles.earningsHeader}>
+          <Text style={styles.earningsTitle}>Earnings</Text>
+          <Text style={styles.weeklyTotal}>This week: <Text style={styles.weeklyAmount}>{currency} 19,200</Text></Text>
+        </View>
+
+        <View style={styles.chartCard}>
+          <View style={styles.chartBars}>
+            {chart.map((height, index) => (
+              <View key={days[index]} style={styles.chartColumn}>
+                <View style={styles.barTrack}>
+                  <View style={[styles.bar, { height: `${height}%` }, index === chart.length - 1 && styles.todayBar]} />
+                </View>
+                <Text style={[styles.dayLabel, index === chart.length - 1 && styles.todayLabel]}>{days[index]}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.cashoutCard}>
+          <View style={styles.cashoutIcon}>
+            <Ionicons name="wallet-outline" size={19} color="#E5A600" />
+          </View>
+          <View style={styles.cashoutText}>
+            <Text style={styles.cashoutLabel}>Available to withdraw</Text>
+            <Text style={styles.cashoutAmount}>{loading ? 'Loading…' : available}</Text>
+          </View>
+          <TouchableOpacity style={styles.cashoutButton} onPress={onCashOut} activeOpacity={0.85}>
+            <Text style={styles.cashoutButtonText}>Cash out</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.comingSoon}>
+          <View style={styles.comingSoonIcon}>
+            <Ionicons name="sparkles-outline" size={19} color="#E5A600" />
+          </View>
+          <View style={styles.comingSoonCopy}>
+            <Text style={styles.comingSoonTitle}>Coming soon</Text>
+            <Text style={styles.comingSoonText}>Detailed earnings insights and weekly reports.</Text>
+          </View>
+        </View>
+      </View>
     </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
+  earningsSafe: { backgroundColor: '#000000' },
+  earningsPage: { flex: 1, backgroundColor: '#F7F7FA', paddingHorizontal: 20 },
+  earningsHeader: { paddingTop: 18, paddingBottom: 12 },
+  earningsTitle: { color: '#20253B', fontSize: 18, fontWeight: '800' },
+  weeklyTotal: { color: '#74798A', fontSize: 11, fontWeight: '500', marginTop: 4 },
+  weeklyAmount: { color: '#E5A600', fontWeight: '800' },
+  chartCard: {
+    height: 132, backgroundColor: '#FFFFFF', borderRadius: 15, paddingHorizontal: 14, paddingTop: 13, marginBottom: 14,
+    shadowColor: '#1D2350', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6, elevation: 2,
+  },
+  chartBars: { flex: 1, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-around' },
+  chartColumn: { flex: 1, height: '100%', alignItems: 'center', justifyContent: 'flex-end' },
+  barTrack: { height: 86, width: 13, justifyContent: 'flex-end' },
+  bar: { width: 13, borderRadius: 4, backgroundColor: '#E9E9EE' },
+  todayBar: { backgroundColor: '#FFB800' },
+  dayLabel: { color: '#73798A', fontSize: 9, marginTop: 7 },
+  todayLabel: { color: '#20253B', fontWeight: '800' },
+  cashoutCard: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', borderRadius: 15, minHeight: 56, paddingHorizontal: 12, marginBottom: 14,
+    shadowColor: '#1D2350', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6, elevation: 2,
+  },
+  cashoutIcon: { width: 34, height: 34, borderRadius: 17, backgroundColor: '#FFF4D1', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
+  cashoutText: { flex: 1 },
+  cashoutLabel: { color: '#777D90', fontSize: 10 },
+  cashoutAmount: { color: '#C18B00', fontSize: 14, fontWeight: '800', marginTop: 2 },
+  cashoutButton: { backgroundColor: '#FFB800', borderRadius: 18, paddingHorizontal: 13, height: 29, alignItems: 'center', justifyContent: 'center' },
+  cashoutButtonText: { color: '#0B0B0B', fontSize: 10, fontWeight: '800' },
+  comingSoon: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF8E7', borderRadius: 15, padding: 15, borderWidth: 1, borderColor: '#F6DF9E' },
+  comingSoonIcon: { width: 34, height: 34, borderRadius: 17, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', marginRight: 11 },
+  comingSoonCopy: { flex: 1 },
+  comingSoonTitle: { color: '#0B0B0B', fontSize: 13, fontWeight: '800' },
+  comingSoonText: { color: '#74798A', fontSize: 11, marginTop: 3, lineHeight: 15 },
   safe: { flex: 1, backgroundColor: theme.colors.black },
   scroll: { paddingHorizontal: 16, paddingTop: 12 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
@@ -276,4 +414,26 @@ const styles = StyleSheet.create({
   txDate: { color: theme.colors.mutedDark, fontSize: 11, marginTop: 2 },
   txAmount: {},
   txValue: { fontWeight: '800', fontSize: 13 },
+  fundiScroll: { paddingHorizontal: 16, paddingTop: 8 },
+  fundiBalanceCard: {
+    borderColor: fc.border,
+    ...fundiCardShadow,
+  },
+  fundiBalanceLabel: { color: fc.textMuted },
+  fundiBalanceAmount: { color: fc.accentDark },
+  fundiStatusText: { color: fc.textMuted },
+  fundiActionBtn: {
+    backgroundColor: fc.card,
+    borderColor: fc.border,
+    ...fundiCardShadow,
+  },
+  fundiActionLabel: { color: fc.text },
+  fundiSectionTitle: { color: fc.text },
+  fundiTxRow: {
+    backgroundColor: fc.card,
+    borderColor: fc.border,
+    ...fundiCardShadow,
+  },
+  fundiTxDesc: { color: fc.text },
+  fundiTxDate: { color: fc.textMuted },
 });

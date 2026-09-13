@@ -4,13 +4,26 @@ import { Ionicons } from '@expo/vector-icons';
 import theme from '../theme';
 import { useLanguage } from '../i18n/LanguageContext';
 
-export default function EmptyState({ icon = 'file-tray-outline', title, message, style }) {
+export default function EmptyState({
+  icon = 'file-tray-outline',
+  title,
+  message,
+  style,
+  variant = 'dark',
+}) {
   const { t } = useLanguage();
+  const light = variant === 'fundi';
   return (
     <View style={[styles.wrap, style]}>
-      <Ionicons name={icon} size={48} color={theme.colors.mutedDark} />
-      <Text style={styles.title}>{t(title)}</Text>
-      {message ? <Text style={styles.message}>{t(message)}</Text> : null}
+      <Ionicons
+        name={icon}
+        size={48}
+        color={light ? theme.colors.textSubtle : theme.colors.mutedDark}
+      />
+      <Text style={[styles.title, light && styles.titleLight]}>{t(title)}</Text>
+      {message ? (
+        <Text style={[styles.message, light && styles.messageLight]}>{t(message)}</Text>
+      ) : null}
     </View>
   );
 }
@@ -35,5 +48,11 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: 8,
     textAlign: 'center',
+  },
+  titleLight: {
+    color: theme.colors.textDark,
+  },
+  messageLight: {
+    color: theme.colors.textMuted,
   },
 });

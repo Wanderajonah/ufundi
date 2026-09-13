@@ -1,14 +1,18 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import theme from '../theme';
+import { fc, fundiCardShadow } from '../fundiTheme';
 import ScreenWrapper from '../components/ScreenWrapper';
+import FundiThemedScreen from '../components/FundiThemedScreen';
 import { useLanguage } from '../i18n/LanguageContext';
 
-export default function PaymentMethodsScreen({ onNavigate }) {
+export default function PaymentMethodsScreen({ onNavigate, userRole = 'customer' }) {
+  const isFundi = userRole === 'fundi';
   const { t } = useLanguage();
-  return (
-    <ScreenWrapper style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.container}>
+
+  const content = (
+    <ScrollView contentContainerStyle={styles.container}>
+      {!isFundi ? (
         <View style={styles.headerRow}>
           <TouchableOpacity onPress={() => onNavigate?.('profile')} style={styles.iconBtn}>
             <Text style={styles.backArrow}>‹</Text>
@@ -16,69 +20,91 @@ export default function PaymentMethodsScreen({ onNavigate }) {
           <Text style={styles.title}>{t('Payment Methods')}</Text>
           <TouchableOpacity style={styles.addBtn}><Text style={styles.addText}>+ {t('Add')}</Text></TouchableOpacity>
         </View>
+      ) : null}
 
-        <Text style={styles.sectionLabel}>{t('Saved Cards')}</Text>
-        <View style={styles.card}>
-          <View style={styles.cardRow}>
-            <View style={styles.brandDot}><Text style={styles.brandText}>VISA</Text></View>
-            <View style={{ flex: 1, marginLeft: 10 }}>
-              <Text style={styles.cardTitle}>•••• 4242</Text>
-              <Text style={styles.cardSub}>{t('Expires 12/26')}</Text>
-            </View>
-            <View style={styles.defaultPill}><Text style={styles.defaultText}>{t('Default')}</Text></View>
+      <Text style={[styles.sectionLabel, isFundi && styles.fundiSection]}>{t('Saved Cards')}</Text>
+      <View style={[styles.card, isFundi && styles.fundiCard]}>
+        <View style={styles.cardRow}>
+          <View style={styles.brandDot}><Text style={styles.brandText}>VISA</Text></View>
+          <View style={{ flex: 1, marginLeft: 10 }}>
+            <Text style={[styles.cardTitle, isFundi && styles.fundiText]}>•••• 4242</Text>
+            <Text style={[styles.cardSub, isFundi && styles.fundiSub]}>{t('Expires 12/26')}</Text>
           </View>
+          <View style={styles.defaultPill}><Text style={styles.defaultText}>{t('Default')}</Text></View>
         </View>
+      </View>
 
-        <View style={styles.card}>
-          <View style={styles.cardRow}>
-            <View style={[styles.brandDot, { backgroundColor: 'rgba(239,68,68,0.2)' }]}><Text style={[styles.brandText, { color: '#EF4444' }]}>MC</Text></View>
-            <View style={{ flex: 1, marginLeft: 10 }}>
-              <Text style={styles.cardTitle}>•••• 8888</Text>
-              <Text style={styles.cardSub}>{t('Expires 08/25')}</Text>
-            </View>
-            <View style={styles.radio} />
+      <View style={[styles.card, isFundi && styles.fundiCard]}>
+        <View style={styles.cardRow}>
+          <View style={[styles.brandDot, { backgroundColor: 'rgba(239,68,68,0.15)' }]}><Text style={[styles.brandText, { color: '#EF4444' }]}>MC</Text></View>
+          <View style={{ flex: 1, marginLeft: 10 }}>
+            <Text style={[styles.cardTitle, isFundi && styles.fundiText]}>•••• 8888</Text>
+            <Text style={[styles.cardSub, isFundi && styles.fundiSub]}>{t('Expires 08/25')}</Text>
           </View>
+          <View style={[styles.radio, isFundi && styles.fundiRadio]} />
         </View>
+      </View>
 
-        <Text style={styles.sectionLabel}>{t('Mobile Money')}</Text>
-        <View style={styles.card}>
-          <View style={styles.cardRow}>
-            <View style={[styles.brandDot, { backgroundColor: 'rgba(234,179,8,0.2)' }]}><Text style={styles.brandText}>M</Text></View>
-            <View style={{ flex: 1, marginLeft: 10 }}>
-              <Text style={styles.cardTitle}>{t('MTN Mobile Money')}</Text>
-              <Text style={styles.cardSub}>+256 771 234 456</Text>
-            </View>
-            <View style={styles.radio} />
+      <Text style={[styles.sectionLabel, isFundi && styles.fundiSection]}>{t('Mobile Money')}</Text>
+      <View style={[styles.card, isFundi && styles.fundiCard]}>
+        <View style={styles.cardRow}>
+          <View style={[styles.brandDot, { backgroundColor: 'rgba(234,179,8,0.15)' }]}><Text style={styles.brandText}>M</Text></View>
+          <View style={{ flex: 1, marginLeft: 10 }}>
+            <Text style={[styles.cardTitle, isFundi && styles.fundiText]}>{t('MTN Mobile Money')}</Text>
+            <Text style={[styles.cardSub, isFundi && styles.fundiSub]}>+256 771 234 456</Text>
           </View>
+          <View style={[styles.radio, isFundi && styles.fundiRadio]} />
         </View>
+      </View>
 
-        <View style={styles.card}>
-          <View style={styles.cardRow}>
-            <View style={[styles.brandDot, { backgroundColor: 'rgba(248,113,113,0.2)' }]}><Text style={[styles.brandText, { color: '#F87171' }]}>A</Text></View>
-            <View style={{ flex: 1, marginLeft: 10 }}>
-              <Text style={styles.cardTitle}>{t('Airtel Money')}</Text>
-              <Text style={styles.cardSub}>+256 700 123 123</Text>
-            </View>
-            <View style={styles.radio} />
+      <View style={[styles.card, isFundi && styles.fundiCard]}>
+        <View style={styles.cardRow}>
+          <View style={[styles.brandDot, { backgroundColor: 'rgba(248,113,113,0.15)' }]}><Text style={[styles.brandText, { color: '#F87171' }]}>A</Text></View>
+          <View style={{ flex: 1, marginLeft: 10 }}>
+            <Text style={[styles.cardTitle, isFundi && styles.fundiText]}>{t('Airtel Money')}</Text>
+            <Text style={[styles.cardSub, isFundi && styles.fundiSub]}>+256 700 123 123</Text>
           </View>
+          <View style={[styles.radio, isFundi && styles.fundiRadio]} />
         </View>
+      </View>
 
-        <Text style={styles.sectionLabel}>{t('Other Methods')}</Text>
-        <View style={styles.card}>
-          <View style={styles.cardRow}>
-            <View style={[styles.brandDot, { backgroundColor: 'rgba(34,197,94,0.2)' }]}><Text style={[styles.brandText, { color: '#22C55E' }]}>$</Text></View>
-            <View style={{ flex: 1, marginLeft: 10 }}>
-              <Text style={styles.cardTitle}>{t('Cash')}</Text>
-              <Text style={styles.cardSub}>{t('Pay in person')}</Text>
-            </View>
-            <View style={styles.radio} />
+      <Text style={[styles.sectionLabel, isFundi && styles.fundiSection]}>{t('Other Methods')}</Text>
+      <View style={[styles.card, isFundi && styles.fundiCard]}>
+        <View style={styles.cardRow}>
+          <View style={[styles.brandDot, { backgroundColor: 'rgba(34,197,94,0.15)' }]}><Text style={[styles.brandText, { color: '#22C55E' }]}>$</Text></View>
+          <View style={{ flex: 1, marginLeft: 10 }}>
+            <Text style={[styles.cardTitle, isFundi && styles.fundiText]}>{t('Cash')}</Text>
+            <Text style={[styles.cardSub, isFundi && styles.fundiSub]}>{t('Pay in person')}</Text>
           </View>
+          <View style={[styles.radio, isFundi && styles.fundiRadio]} />
         </View>
+      </View>
 
-        <View style={styles.noteBox}>
-          <Text style={styles.noteText}>{t('Your payment info is encrypted and stored securely.')}</Text>
-        </View>
-      </ScrollView>
+      <View style={[styles.noteBox, isFundi && styles.fundiNoteBox]}>
+        <Text style={[styles.noteText, isFundi && styles.fundiNoteText]}>{t('Your payment info is encrypted and stored securely.')}</Text>
+      </View>
+    </ScrollView>
+  );
+
+  if (isFundi) {
+    return (
+      <FundiThemedScreen
+        title={t('Payment Methods')}
+        onBack={() => onNavigate?.('profile')}
+        rightElement={
+          <TouchableOpacity style={styles.addBtn} onPress={() => {}}>
+            <Text style={styles.addText}>+ {t('Add')}</Text>
+          </TouchableOpacity>
+        }
+      >
+        {content}
+      </FundiThemedScreen>
+    );
+  }
+
+  return (
+    <ScreenWrapper style={styles.safe}>
+      {content}
     </ScreenWrapper>
   );
 }
@@ -106,4 +132,12 @@ const styles = StyleSheet.create({
 
   noteBox: { marginTop: 8, backgroundColor: 'rgba(245,158,11,0.1)', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(245,158,11,0.3)' },
   noteText: { color: theme.colors.accent, fontWeight: '700', fontSize: 11 },
+
+  fundiText: { color: fc.text },
+  fundiSub: { color: fc.textMuted },
+  fundiSection: { color: fc.textMuted },
+  fundiCard: { backgroundColor: fc.card, borderColor: fc.border, ...fundiCardShadow },
+  fundiRadio: { borderColor: fc.border },
+  fundiNoteBox: { backgroundColor: 'rgba(255,184,0,0.08)', borderColor: 'rgba(255,184,0,0.3)' },
+  fundiNoteText: { color: fc.accentDark },
 });

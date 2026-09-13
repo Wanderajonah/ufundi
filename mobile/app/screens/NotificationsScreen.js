@@ -2,12 +2,15 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import theme from '../theme';
+import { fc, fundiCardShadow, fundiStyles } from '../fundiTheme';
 import ScreenWrapper from '../components/ScreenWrapper';
+import FundiThemedScreen from '../components/FundiThemedScreen';
 import EmptyState from '../components/EmptyState';
 import { useBookingOptional } from '../../context/BookingContext';
 import { useLanguage } from '../i18n/LanguageContext';
 
-export default function NotificationsScreen({ onNavigate }) {
+export default function NotificationsScreen({ onNavigate, userRole = 'customer' }) {
+  const isFundi = userRole === 'fundi';
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('all');
   const bookingCtx = useBookingOptional();
@@ -37,27 +40,28 @@ export default function NotificationsScreen({ onNavigate }) {
     (n) => activeTab === 'all' || n.type === activeTab.replace(/s$/, '')
   );
 
-  return (
-    <ScreenWrapper style={styles.safe}>
-      <View style={styles.container}>
-        <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => onNavigate?.('profile')} style={styles.backBtn}>
-            <Ionicons name="chevron-back" size={20} color={theme.colors.accent} />
-          </TouchableOpacity>
-          <Text style={styles.title}>{t('Notifications')}</Text>
-          <View style={{ width: 40 }} />
-        </View>
-
-        <View style={styles.chipsRow}>
+  const listBody = (
+    <>
+        <View style={isFundi ? fundiStyles.tabRow : styles.chipsRow}>
           {chips.map((c) => {
             const isActive = c.key === activeTab;
             return (
               <TouchableOpacity
                 key={c.key}
-                style={[styles.chip, isActive && styles.chipActive]}
+                style={[
+                  isFundi ? fundiStyles.tab : styles.chip,
+                  isActive && (isFundi ? fundiStyles.tabActive : styles.chipActive),
+                ]}
                 onPress={() => setActiveTab(c.key)}
               >
-                <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{c.label}</Text>
+                <Text
+                  style={[
+                    isFundi ? fundiStyles.tabText : styles.chipText,
+                    isActive && (isFundi ? fundiStyles.tabTextActive : styles.chipTextActive),
+                  ]}
+                >
+                  {c.label}
+                </Text>
               </TouchableOpacity>
             );
           })}
@@ -70,23 +74,51 @@ export default function NotificationsScreen({ onNavigate }) {
           ListEmptyComponent={
             <EmptyState
               icon="notifications-outline"
+              variant={isFundi ? 'fundi' : 'dark'}
               title={t('No notifications yet')}
               message={t('Booking updates and messages will appear here.')}
             />
           }
           renderItem={({ item }) => (
-            <View style={styles.card}>
+            <View style={[styles.card, isFundi && styles.cardFundi]}>
               <View style={styles.iconDot}>
                 <Text style={styles.iconText}>!</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.cardTitle}>{item.title}</Text>
-                <Text style={styles.cardBody}>{item.body}</Text>
+                <Text style={[styles.cardTitle, isFundi && styles.cardTitleFundi]}>{item.title}</Text>
+                <Text style={[styles.cardBody, isFundi && styles.cardBodyFundi]}>{item.body}</Text>
               </View>
-              <Text style={styles.time}>{t(item.time)}</Text>
+              <Text style={[styles.time, isFundi && styles.timeFundi]}>{t(item.time)}</Text>
             </View>
           )}
         />
+    </>
+  );
+
+  if (isFundi) {
+    return (
+      <FundiThemedScreen
+        title={t('Notifications')}
+        onBack={() => onNavigate?.('home')}
+        scroll={false}
+        contentStyle={{ paddingTop: 8, flex: 1 }}
+      >
+        <View style={{ flex: 1 }}>{listBody}</View>
+      </FundiThemedScreen>
+    );
+  }
+
+  return (
+    <ScreenWrapper style={styles.safe}>
+      <View style={styles.container}>
+        <View style={styles.headerRow}>
+          <TouchableOpacity onPress={() => onNavigate?.('profile')} style={styles.backBtn}>
+            <Ionicons name="chevron-back" size={20} color={theme.colors.accent} />
+          </TouchableOpacity>
+          <Text style={styles.title}>{t('Notifications')}</Text>
+          <View style={{ width: 40 }} />
+        </View>
+        {listBody}
       </View>
     </ScreenWrapper>
   );

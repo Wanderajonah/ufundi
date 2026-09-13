@@ -16,12 +16,8 @@ import theme from '../theme';
 import { sendOtp } from '../../services/authApi';
 import { useLanguage } from '../i18n/LanguageContext';
 
-/** Exactly four OTP slots — do not change length without updating backend. */
-const OTP_LENGTH = 4;
-const OTP_INDEXES = [0, 1, 2, 3];
-
-function emptyDigits() {
-  return ['', '', '', ''];
+function emptyDigits(length) {
+  return Array.from({ length }, () => '');
 }
 
 export default function OtpScreen({
@@ -32,8 +28,12 @@ export default function OtpScreen({
   onBack,
   onVerify,
   onResent,
+  channel = 'phone',
+  onRequestResend,
 }) {
-  const [digits, setDigits] = useState(emptyDigits);
+  const otpLength = channel === 'email' ? 6 : 4;
+  const otpIndexes = Array.from({ length: otpLength }, (_, index) => index);
+  const [digits, setDigits] = useState(() => emptyDigits(otpLength));
   const [seconds, setSeconds] = useState(expiresIn);
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
@@ -49,17 +49,17 @@ export default function OtpScreen({
   }, []);
 
   useEffect(() => {
-    setDigits(emptyDigits());
+    setDigits(emptyDigits(otpLength));
     setSeconds(expiresIn);
-  }, [expiresIn, phoneRaw]);
+  }, [expiresIn, phoneRaw, otpLength]);
 
   const applyCode = useCallback(
     (raw) => {
       const chars = String(raw || '')
         .replace(/\D/g, '')
-        .slice(0, OTP_LENGTH)
+        .slice(0, otpLength)
         .split('');
-      const next = emptyDigits();
+      const next = emptyDigits(otpLength);
       chars.forEach((ch, i) => {
         next[i] = ch;
       });
@@ -70,8 +70,8 @@ export default function OtpScreen({
   );
 
   const handleVerify = async (enteredCode = code) => {
-    if (enteredCode.length !== OTP_LENGTH) {
-      Alert.alert(t('Invalid code'), t('Enter the full {{length}}-digit code.', { length: OTP_LENGTH }));
+    if (enteredCode.length !== otpLength) {
+      Alert.alert(t('Invalid code'), t('Enter the full {{length}}-digit code.', { length: otpLength }));
       return;
     }
     setLoading(true);
@@ -89,8 +89,8 @@ export default function OtpScreen({
 
   const onCodeComplete = useCallback(
     (nextCode) => {
-      if (nextCode.length === OTP_LENGTH) {
-        inputRefs.current[OTP_LENGTH - 1]?.blur();
+      if (nextCode.length === otpLength) {
+        inputRefs.current[otpLength - 1]?.blur();
         handleVerify(nextCode);
       }
     },
@@ -102,9 +102,9 @@ export default function OtpScreen({
 
     if (onlyDigits.length > 1) {
       const nextCode = applyCode(onlyDigits);
-      const lastIndex = Math.min(onlyDigits.length, OTP_LENGTH) - 1;
+      const lastIndex = Math.min(onlyDigits.length, otpLength) - 1;
       inputRefs.current[lastIndex]?.focus();
-      if (nextCode.length === OTP_LENGTH) onCodeComplete(nextCode);
+      if (nextCode.length === otpLength) onCodeComplete(nextCode);
       return;
     }
 
@@ -113,10 +113,10 @@ export default function OtpScreen({
     setDigits(next);
     const nextCode = next.join('');
 
-    if (onlyDigits && index < OTP_LENGTH - 1) {
+    if (onlyDigits && index < otpLength - 1) {
       inputRefs.current[index + 1]?.focus();
     }
-    if (nextCode.length === OTP_LENGTH) onCodeComplete(nextCode);
+    if (nextCode.length === otpLength) onCodeComplete(nextCode);
   };
 
   const handleKeyPress = (e, index) => {
@@ -130,7 +130,7 @@ export default function OtpScreen({
 
   const handleHiddenChange = (raw) => {
     const nextCode = applyCode(raw);
-    if (nextCode.length === OTP_LENGTH) onCodeComplete(nextCode);
+    if (nextCode.length === otpLength) onCodeComplete(nextCode);
   };
 
   const handleResend = async () => {
@@ -140,12 +140,14 @@ export default function OtpScreen({
     }
     try {
       setResending(true);
-      const { data } = await sendOtp(phoneRaw || phone, purpose);
+      const { data } = onRequestResend
+        ? await onRequestResend()
+        : await sendOtp(phoneRaw || phone, purpose);
       setSeconds(data.expiresIn || 600);
       if (data.devCode) {
         Alert.alert(t('Dev mode'), t('Your code is: {{code}}', { code: data.devCode }));
       }
-      setDigits(emptyDigits());
+      setDigits(emptyDigits(otpLength));
       onResent?.(data);
     } catch (error) {
       Alert.alert(t('Resend failed'), error?.response?.data?.message || t('Could not resend OTP.'));
@@ -163,10 +165,10 @@ export default function OtpScreen({
 
       <AuthHeader
         onBack={onBack}
-        title={t('Verify your number')}
+        title={t(channel === 'email' ? 'Verify your email' : 'Verify your number')}
         subtitle={
           <>
-            {t('Enter the {{digits}}-digit code sent to', { digits: OTP_LENGTH })}{' '}
+            {t('Enter the {{digits}}-digit code sent to', { digits: otpLength })}{' '}
             <Text style={styles.phone}>{phone}</Text>
           </>
         }
@@ -177,10 +179,10 @@ export default function OtpScreen({
         ref={hiddenRef}
         value={code}
         onChangeText={handleHiddenChange}
-        maxLength={OTP_LENGTH}
+        maxLength={otpLength}
         keyboardType="number-pad"
         textContentType="oneTimeCode"
-        autoComplete="sms-otp"
+        autoComplete={channel === 'email' ? 'off' : 'sms-otp'}
         importantForAutofill="yes"
         style={styles.hiddenInput}
         caretHidden
@@ -192,7 +194,7 @@ export default function OtpScreen({
         onPress={() => inputRefs.current[0]?.focus()}
       >
         <View style={styles.otpRow}>
-          {OTP_INDEXES.map((index) => (
+          {otpIndexes.map((index) => (
             <TextInput
               key={`otp-slot-${index}`}
               ref={(el) => {
