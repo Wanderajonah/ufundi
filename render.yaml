@@ -2,8 +2,9 @@ services:
   - type: web
     name: fundilink-api
     runtime: node
-    repo: https://github.com/Wanderajonah/fundilinkug
+    repo: https://github.com/Wanderajonah/ufundi
     branch: master
+    rootDirectory: backend
     buildCommand: npm install
     startCommand: npm start
     healthCheckPath: /api/health
@@ -12,7 +13,9 @@ services:
         value: production
       - key: PORT
         value: "5000"
-      - key: MONGO_URI
+      - key: SUPABASE_URL
+        value: https://fqblwkktbucxngyxylnn.supabase.co
+      - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
       - key: JWT_SECRET
         sync: false
@@ -23,4 +26,12 @@ services:
       - key: COMMS_API_KEY
         sync: false
       - key: COMMS_SENDER_ID
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_OTP_FROM
+        sync: false
+      - key: ADMIN_EMAIL
+        value: admin@fundilink.ug
+      - key: ADMIN_PASSWORD
         sync: false

@@ -4,6 +4,8 @@
   "version": "1.0.0",
   "description": "FundiLink Uganda monorepo",
   "scripts": {
+    "start": "npm --prefix backend start",
+    "postinstall": "npm --prefix backend install",
     "web:dev": "npm --prefix web run dev",
     "web:build": "npm --prefix web run build",
     "backend:dev": "npm --prefix backend run dev",
