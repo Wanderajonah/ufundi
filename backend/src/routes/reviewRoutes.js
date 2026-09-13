@@ -7,6 +7,7 @@ const {
 } = require("../controllers/reviewController");
 const { protect } = require("../middleware/authMiddleware");
 const { uploadReview } = require("../middleware/uploadMiddleware");
+const { storageFileUrl } = require("../services/gridfsStorage");
 
 const router = express.Router();
 
@@ -22,7 +23,7 @@ router.post("/upload", protect, uploadReview.array("images", 3), async (req, res
     if (!req.files || !req.files.length) {
       return res.status(400).json({ success: false, message: "No image files provided" });
     }
-    const urls = req.files.map((f) => "/uploads/reviews/" + f.filename);
+    const urls = req.files.map((f) => storageFileUrl("reviews", f.filename));
     return res.json({ success: true, urls });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });

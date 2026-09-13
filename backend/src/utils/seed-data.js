@@ -1,6 +1,6 @@
 require("dotenv").config();
 const bcrypt = require("bcryptjs");
-const mongoose = require("mongoose");
+const { randomUUID } = require("crypto");
 const connectDB = require("../config/db");
 const User = require("../models/User");
 const FundiProfile = require("../models/FundiProfile");
@@ -107,9 +107,7 @@ function weightedStatus(values, weights) {
 }
 
 const seed = async () => {
-  if (mongoose.connection.readyState !== 1) {
-    await connectDB();
-  }
+  await connectDB();
 
   // Clear existing data (keep admin users)
   await Promise.all([
@@ -124,13 +122,13 @@ const seed = async () => {
   ]);
 
   const password = await bcrypt.hash("password123", 10);
-  const ObjectId = mongoose.Types.ObjectId;
+  const ObjectId = () => randomUUID();
 
   // === CUSTOMERS (50) ===
   const customers = [];
   for (let i = 0; i < 50; i++) {
     customers.push({
-      _id: new ObjectId(),
+      _id: ObjectId(),
       name: `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`,
       email: `customer${i}@example.com`,
       phone: `256700${100010 + i}`,
@@ -152,7 +150,7 @@ const seed = async () => {
     const statusRoll = Math.random();
     const verificationStatus = statusRoll < 0.6 ? "verified" : statusRoll < 0.85 ? "pending" : "rejected";
     fundis.push({
-      _id: new ObjectId(),
+      _id: ObjectId(),
       name: `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`,
       email: `fundi${i}@fundi.com`,
       phone: `256700${200010 + i}`,
@@ -206,7 +204,7 @@ const seed = async () => {
     const customerId = pick(customerIds);
     const status = weightedStatus(jobStatuses, jobWeights);
     jobs.push({
-      _id: new ObjectId(),
+      _id: ObjectId(),
       customerId,
       fundiId: status !== "open" ? pick(fundis)._id : undefined,
       description: pick(BOOKING_DESCRIPTIONS[category] || [category]),
@@ -242,7 +240,7 @@ const seed = async () => {
     const payStatus = paymentStatusMap[status] || (Math.random() > 0.5 ? "held" : "unpaid");
 
     bookings.push({
-      _id: new ObjectId(),
+      _id: ObjectId(),
       clientId: pick(customerIds),
       fundiId: fundi._id,
       category,
@@ -277,7 +275,7 @@ const seed = async () => {
       : randomInt(30000, 250000);
 
     transactions.push({
-      _id: new ObjectId(),
+      _id: ObjectId(),
       walletId: userId,
       userId,
       type: txType,
@@ -293,7 +291,7 @@ const seed = async () => {
   // === REVIEWS (from completed jobs, up to 30) ===
   const reviewJobs = jobs.filter((j) => j.status === "completed" && j.fundiId).slice(0, 30);
   const reviews = reviewJobs.map((job) => ({
-    _id: new ObjectId(),
+    _id: ObjectId(),
     fundiId: job.fundiId,
     customerId: job.customerId,
     jobId: job._id,

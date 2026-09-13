@@ -1,8 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const path = require("path");
-const { protect, requireRole } = require("../middleware/authMiddleware");
+const { protect, requireRole, requireVerifiedFundi } = require("../middleware/authMiddleware");
 const { uploadBooking } = require("../middleware/uploadMiddleware");
+const { storageFileUrl } = require("../services/gridfsStorage");
 const Booking = require("../models/Booking");
 const {
   createBooking,
@@ -76,7 +77,7 @@ router.post("/client/bookings/:id/price", protect, requireRole("customer"), asyn
 });
 
 // Fundi routes
-router.post("/fundi/accept", protect, requireRole("fundi"), async (req, res) => {
+router.post("/fundi/accept", protect, requireRole("fundi"), requireVerifiedFundi, async (req, res) => {
   try {
     const { bookingId } = req.body;
     const booking = await acceptBooking(bookingId, req.user._id);
@@ -86,7 +87,7 @@ router.post("/fundi/accept", protect, requireRole("fundi"), async (req, res) => 
   }
 });
 
-router.post("/fundi/decline", protect, requireRole("fundi"), async (req, res) => {
+router.post("/fundi/decline", protect, requireRole("fundi"), requireVerifiedFundi, async (req, res) => {
   try {
     const { bookingId } = req.body;
     const booking = await declineBooking(bookingId, req.user._id);
@@ -96,7 +97,7 @@ router.post("/fundi/decline", protect, requireRole("fundi"), async (req, res) =>
   }
 });
 
-router.put("/fundi/status", protect, requireRole("fundi"), async (req, res) => {
+router.put("/fundi/status", protect, requireRole("fundi"), requireVerifiedFundi, async (req, res) => {
   try {
     const { bookingId, status } = req.body;
     const booking = await updateBookingStatus(bookingId, req.user._id, status);
@@ -106,7 +107,7 @@ router.put("/fundi/status", protect, requireRole("fundi"), async (req, res) => {
   }
 });
 
-router.post("/fundi/cancel", protect, requireRole("fundi"), async (req, res) => {
+router.post("/fundi/cancel", protect, requireRole("fundi"), requireVerifiedFundi, async (req, res) => {
   try {
     const { bookingId, reason } = req.body;
     const booking = await cancelBooking(bookingId, req.user._id, "fundi", reason);
@@ -116,7 +117,7 @@ router.post("/fundi/cancel", protect, requireRole("fundi"), async (req, res) => 
   }
 });
 
-router.get("/fundi/bookings", protect, requireRole("fundi"), async (req, res) => {
+router.get("/fundi/bookings", protect, requireRole("fundi"), requireVerifiedFundi, async (req, res) => {
   try {
     const { status } = req.query;
     const bookings = await getUserBookings(req.user._id, "fundi", status);
@@ -126,7 +127,7 @@ router.get("/fundi/bookings", protect, requireRole("fundi"), async (req, res) =>
   }
 });
 
-router.get("/fundi/bookings/:id", protect, requireRole("fundi"), async (req, res) => {
+router.get("/fundi/bookings/:id", protect, requireRole("fundi"), requireVerifiedFundi, async (req, res) => {
   try {
     const booking = await getBookingById(req.params.id, req.user._id, "fundi");
     res.json({ success: true, booking });
@@ -145,7 +146,7 @@ router.put("/fundi/location", protect, requireRole("fundi"), async (req, res) =>
   }
 });
 
-router.post("/fundi/bookings/:id/price", protect, requireRole("fundi"), async (req, res) => {
+router.post("/fundi/bookings/:id/price", protect, requireRole("fundi"), requireVerifiedFundi, async (req, res) => {
   try {
     const { price, action } = req.body;
     const booking = await negotiatePrice(req.params.id, req.user._id, "fundi", { price, action });
@@ -156,7 +157,7 @@ router.post("/fundi/bookings/:id/price", protect, requireRole("fundi"), async (r
 });
 
 // Update fundi availability status
-router.put("/fundi/availability", protect, requireRole("fundi"), async (req, res) => {
+router.put("/fundi/availability", protect, requireRole("fundi"), requireVerifiedFundi, async (req, res) => {
   try {
     const { isAvailable, availableForNegotiation } = req.body;
     const FundiProfile = require("../models/FundiProfile");
@@ -180,7 +181,7 @@ router.post("/upload", protect, uploadBooking.single("image"), async (req, res) 
       return res.status(400).json({ success: false, message: "No image file provided" });
     }
     const { bookingId } = req.body;
-    const url = "/uploads/bookings/" + req.file.filename;
+    const url = storageFileUrl("bookings", req.file.filename);
 
     if (bookingId) {
       const booking = await Booking.findById(bookingId);

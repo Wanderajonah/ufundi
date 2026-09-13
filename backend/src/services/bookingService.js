@@ -24,7 +24,8 @@ async function findNearestAvailableFundis(lat, lng, category, radiusKm = 50, exc
     // Find fundis with matching skills
     const fundiProfiles = await FundiProfile.find({
       ...buildSkillsQuery(category),
-      isAvailable: true
+      isAvailable: true,
+      verificationStatus: "verified",
     }).populate("userId");
     
     // Filter by distance and exclude already notified fundis
@@ -82,7 +83,8 @@ async function createBooking(clientId, bookingData) {
     if (fundiId) {
       // Direct booking to a specific fundi chosen by the client
       const fundi = await User.findById(fundiId);
-      if (!fundi || (fundi.role !== "fundi" && !fundi.fundiEnabled)) {
+      const fundiProfile = fundi && await FundiProfile.findOne({ userId: fundi._id, verificationStatus: "verified" });
+      if (!fundi || !fundiProfile || (fundi.role !== "fundi" && !fundi.fundiEnabled)) {
         booking.status = "CANCELLED";
         booking.cancelledBy = "SYSTEM";
         booking.cancellationReason = "Selected fundi not found";

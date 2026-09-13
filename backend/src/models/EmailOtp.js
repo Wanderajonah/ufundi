@@ -1,8 +1,8 @@
 const { createModel } = require("../db/shim");
 
 module.exports = createModel({
-  tableName: "admin_notifications",
-  name: "AdminNotification",
+  tableName: "email_otps",
+  name: "EmailOtp",
   timestamps: true,
-  refs: { relatedId: "User" },
+  upsertConflict: "email,purpose",
 });

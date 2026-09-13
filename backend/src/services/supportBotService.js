@@ -1,6 +1,5 @@
 const fs = require("fs");
 const path = require("path");
-const mongoose = require("mongoose");
 const { guessTradeFromText } = require("../utils/trades");
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const DEFAULT_VISION_MODEL = "qwen/qwen3.6-27b";
@@ -128,35 +127,9 @@ async function groqChat(body, maxAttempts = 3) {
   return null;
 }
 
-/** Convert a GridFS file to a base64 data URL. */
-async function gridFsFileToDataUrl(bucketName, fileId) {
-  const idPart = String(fileId).split(".")[0];
-  if (!mongoose.Types.ObjectId.isValid(idPart)) return null;
-  if (mongoose.connection.readyState !== 1) return null;
-
-  const { getBucket } = require("./gridfsStorage");
-  const bucket = getBucket(bucketName);
-  const files = await bucket
-    .find({ _id: new mongoose.Types.ObjectId(idPart) })
-    .toArray();
-  if (!files.length) return null;
-
-  const file = files[0];
-  const buf = await new Promise((resolve, reject) => {
-    const bufs = [];
-    const stream = bucket.openDownloadStream(file._id);
-    stream.on("data", (c) => bufs.push(c));
-    stream.on("end", () => resolve(Buffer.concat(bufs)));
-    stream.on("error", reject);
-  });
-
-  const mime = file.contentType || MIME_BY_EXT[path.extname(file.filename).toLowerCase()] || "image/jpeg";
-  return `data:${mime};base64,${buf.toString("base64")}`;
-}
-
 /**
  * Read an uploaded chat image and return a base64 data URL. Supports legacy
- * disk files, GridFS (current storage), data URLs, and remote http(s) URLs.
+ * disk files, data URLs, and remote http(s) URLs (incl. Supabase Storage).
  */
 async function readUploadAsDataUrl(imageUrl) {
   if (!imageUrl) return null;
@@ -182,17 +155,6 @@ async function readUploadAsDataUrl(imageUrl) {
   if (fs.existsSync(filePath)) {
     const mime = MIME_BY_EXT[path.extname(filePath).toLowerCase()] || "image/jpeg";
     return `data:${mime};base64,${fs.readFileSync(filePath).toString("base64")}`;
-  }
-
-  // current GridFS storage: /uploads/<bucket>/<id>[.ext]
-  const parts = rel.split("/");
-  if (parts.length === 2) {
-    try {
-      const dataUrl = await gridFsFileToDataUrl(parts[0], parts[1]);
-      if (dataUrl) return dataUrl;
-    } catch (e) {
-      // fall through to null
-    }
   }
 
   return null;

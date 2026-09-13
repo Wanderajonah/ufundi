@@ -24,7 +24,7 @@ const attachReviewCounts = async (fundis) => {
 const getFundis = async (req, res, next) => {
   try {
     const { category, lat, lng, radiusKm = 20, excludeUserId, excludePhone, excludeEmail } = req.query;
-    const query = category && category !== "all" ? buildSkillsQuery(category) : {};
+    const query = { ...(category && category !== "all" ? buildSkillsQuery(category) : {}), verificationStatus: "verified" };
 
     const excludeIds = new Set();
     if (excludeUserId) excludeIds.add(excludeUserId);
@@ -70,7 +70,7 @@ const getFundis = async (req, res, next) => {
 
 const getFundiById = async (req, res, next) => {
   try {
-    const fundi = await FundiProfile.findById(req.params.id).populate("userId", "-password");
+    const fundi = await FundiProfile.findOne({ _id: req.params.id, verificationStatus: "verified" }).populate("userId", "-password");
     if (!fundi) return res.status(404).json({ message: "Fundi not found" });
     const [withStats] = await attachReviewCounts([fundi.toObject()]);
     return res.json(withStats);
@@ -82,7 +82,7 @@ const getFundiById = async (req, res, next) => {
 const getNegotiableFundis = async (req, res, next) => {
   try {
     const { category, lat, lng, radiusKm = 20, excludeUserId, excludePhone, excludeEmail } = req.query;
-    const query = { availableForNegotiation: true };
+    const query = { availableForNegotiation: true, verificationStatus: "verified" };
     if (category && category !== "all") {
       query.$or = [{ skills: category }, { skills: { $in: [category] } }];
     }

@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const FundiProfile = require("../models/FundiProfile");
 
 const protect = async (req, res, next) => {
   try {
@@ -43,4 +44,18 @@ const requireRole = (...roles) => {
   };
 };
 
-module.exports = { protect, requireRole };
+// Identity review is an activation requirement, not just a profile badge.
+// Keep this server-side so an unverified fundi cannot access client data by
+// calling the API directly or using an older version of the mobile app.
+const requireVerifiedFundi = async (req, res, next) => {
+  const profile = await FundiProfile.findOne({ userId: req.user && req.user._id }).select("verificationStatus");
+  if (!profile || profile.verificationStatus !== "verified") {
+    return res.status(403).json({
+      message: "Your Fundi account must be verified before you can access client jobs or appear on the map.",
+      code: "FUNDI_VERIFICATION_REQUIRED",
+    });
+  }
+  return next();
+};
+
+module.exports = { protect, requireRole, requireVerifiedFundi };

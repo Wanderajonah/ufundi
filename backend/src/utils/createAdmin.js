@@ -1,6 +1,5 @@
 require("dotenv").config();
 const bcrypt = require("bcryptjs");
-const mongoose = require("mongoose");
 const connectDB = require("../config/db");
 const User = require("../models/User");
 
@@ -30,11 +29,9 @@ const createAdmin = async () => {
   console.log("Admin user ready");
   console.log(`Email: ${admin.email}`);
   console.log(`Name: ${admin.name}`);
-  await mongoose.connection.close();
 };
 
-createAdmin().catch(async (error) => {
+createAdmin().catch((error) => {
   console.error(error);
-  await mongoose.connection.close();
   process.exit(1);
 });

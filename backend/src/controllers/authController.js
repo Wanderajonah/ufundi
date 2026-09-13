@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { OAuth2Client } = require("google-auth-library");
 const User = require("../models/User");
 const FundiProfile = require("../models/FundiProfile");
 const {
@@ -8,10 +9,20 @@ const {
   verifyOtp,
   normalizePhone: normalizeUgandaPhone,
 } = require("../services/otpService");
+const { issueEmailOtp, verifyEmailOtp } = require("../services/emailOtpService");
 const { normalizePhone } = require("../services/egoSms");
 
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+
+const googleClient = new OAuth2Client();
+const googleClientIds = () => (
+  process.env.GOOGLE_OAUTH_CLIENT_IDS || [
+    process.env.GOOGLE_WEB_CLIENT_ID,
+    process.env.GOOGLE_ANDROID_CLIENT_ID,
+    process.env.GOOGLE_IOS_CLIENT_ID,
+  ].filter(Boolean).join(",")
+).split(",").map((id) => id.trim()).filter(Boolean);
 
 const normalizeRole = (role) => (role === "client" ? "customer" : role);
 
@@ -271,6 +282,40 @@ const verifyOtpLogin = async (req, res, next) => {
   }
 };
 
+const sendGoogleEmailLoginOtp = async (req, res, next) => {
+  try {
+    const { idToken } = req.body;
+    if (!idToken) return res.status(400).json({ message: "Google ID token is required" });
+    const audience = googleClientIds();
+    if (!audience.length) return res.status(503).json({ message: "Google sign-in is not configured" });
+    const ticket = await googleClient.verifyIdToken({ idToken, audience });
+    const payload = ticket.getPayload();
+    const email = String(payload.email || "").trim().toLowerCase();
+    if (!email || !payload.email_verified) {
+      return res.status(400).json({ message: "Choose a verified Google email address" });
+    }
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "Account not found. Please sign up first." });
+    return res.json(await issueEmailOtp(email));
+  } catch (error) {
+    if (error.statusCode) return res.status(error.statusCode).json({ message: error.message });
+    return next(error);
+  }
+};
+
+const verifyEmailLoginOtp = async (req, res, next) => {
+  try {
+    const email = await verifyEmailOtp(req.body.email, req.body.code);
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "Account not found. Please sign up first." });
+    const isDualRole = user.fundiEnabled && user.role === "customer";
+    return res.json({ token: generateToken(user._id), user: formatUser(user), requireRoleSelection: isDualRole });
+  } catch (error) {
+    if (error.statusCode) return res.status(error.statusCode).json({ message: error.message });
+    return next(error);
+  }
+};
+
 const selectRole = async (req, res, next) => {
   try {
     const { role } = req.body;
@@ -305,5 +350,7 @@ module.exports = {
   sendOtp,
   verifyOtpRegister,
   verifyOtpLogin,
+  sendGoogleEmailLoginOtp,
+  verifyEmailLoginOtp,
   selectRole,
 };

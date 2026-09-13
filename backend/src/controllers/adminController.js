@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const { isConfigured } = require("../config/supabase");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
@@ -637,12 +637,11 @@ const createUser = async (req, res, next) => {
 };
 
 const getHealth = async (req, res) => {
-  const dbState = mongoose.connection.readyState;
-  const dbStatus = dbState === 1 ? "connected" : "disconnected";
+  const dbConfigured = isConfigured();
   return res.json({
-    status: dbState === 1 ? "healthy" : "degraded",
+    status: dbConfigured ? "healthy" : "degraded",
     api: "running",
-    database: dbStatus,
+    database: dbConfigured ? "connected" : "disconnected",
     timestamp: new Date().toISOString(),
   });
 };

@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const FundiProfile = require("../models/FundiProfile");
+const { storageFileUrl } = require("../services/gridfsStorage");
 
 const getProfile = async (req, res, next) => {
   try {
@@ -101,8 +102,8 @@ const uploadProfilePicture = async (req, res, next) => {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    // Create the file URL (assuming server serves static files from uploads directory)
-    const fileUrl = `/uploads/profiles/${req.file.filename}`;
+    // Create the file URL (Supabase Storage public URL)
+    const fileUrl = storageFileUrl("profiles", req.file.filename);
 
     // Update user's profile photo
     const user = await User.findByIdAndUpdate(
@@ -126,7 +127,7 @@ const uploadCoverPhoto = async (req, res, next) => {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    const fileUrl = `/uploads/profiles/${req.file.filename}`;
+    const fileUrl = storageFileUrl("profiles", req.file.filename);
 
     const user = await User.findByIdAndUpdate(
       req.user._id,
@@ -149,7 +150,7 @@ const uploadPortfolioImages = async (req, res, next) => {
       return res.status(400).json({ message: "No files uploaded" });
     }
 
-    const fileUrls = req.files.map((f) => `/uploads/portfolio/${f.filename}`);
+    const fileUrls = req.files.map((f) => storageFileUrl("portfolio", f.filename));
 
     const fundiProfile = await FundiProfile.findOneAndUpdate(
       { userId: req.user._id },
@@ -187,8 +188,12 @@ const deletePortfolioImage = async (req, res, next) => {
 
 const requestVerification = async (req, res, next) => {
   try {
+    const user = await User.findById(req.user._id).select("role fundiEnabled");
+    if (!user || (user.role !== "fundi" && !user.fundiEnabled)) {
+      return res.status(403).json({ message: "Only fundi accounts can request verification" });
+    }
     const fileUrls = req.files?.length
-      ? req.files.map((f) => `/uploads/verification/${f.filename}`)
+      ? req.files.map((f) => storageFileUrl("verification", f.filename))
       : [];
 
     const update = {

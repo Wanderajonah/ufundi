@@ -5,6 +5,7 @@ const { getBotResponse } = require("../services/supportBotService");
 const { filterByRadius, normalizeCoords } = require("../utils/geo");
 const { getRecommendations } = require("../services/recommendationService");
 const { buildSkillsQuery, guessTradeFromText } = require("../utils/trades");
+const { storageFileUrl } = require("../services/gridfsStorage");
 
 async function getOrCreateConversation(req, res) {
   try {
@@ -142,7 +143,7 @@ async function supportChat(req, res) {
     const originLng = Number(lng) || req.user?.location?.lng;
 
     // Only recommend fundis whose skills match the job trade (e.g. plumbers, not cleaners).
-    const query = category ? buildSkillsQuery(category) : {};
+    const query = { ...(category ? buildSkillsQuery(category) : {}), verificationStatus: "verified", isAvailable: true };
     let fundis = await FundiProfile.find(query)
       .populate({ path: "userId", select: "-password" })
       .limit(50);
@@ -201,7 +202,7 @@ async function uploadChatImage(req, res) {
     if (!req.file) {
       return res.status(400).json({ success: false, message: "No image file provided" });
     }
-    const url = "/uploads/chat/" + req.file.filename;
+    const url = storageFileUrl("chat", req.file.filename);
     return res.json({ success: true, url });
   } catch (error) {
     console.error("Error uploading chat image:", error);

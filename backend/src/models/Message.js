@@ -1,14 +1,9 @@
-const mongoose = require("mongoose");
+const { createModel } = require("../db/shim");
 
-const messageSchema = new mongoose.Schema({
-  conversationId: { type: mongoose.Schema.Types.ObjectId, ref: "Conversation", required: true },
-  senderId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  text: { type: String, default: "" },
-  imageUrl: { type: String, default: null },
-  read: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now }
+module.exports = createModel({
+  tableName: "messages",
+  name: "Message",
+  timestamps: true,
+  jsonbColumns: [],
+  refs: { conversationId: "Conversation", senderId: "User" },
 });
-
-messageSchema.index({ conversationId: 1, createdAt: 1 });
-
-module.exports = mongoose.model("Message", messageSchema);

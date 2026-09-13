@@ -53,7 +53,7 @@ const nearbyFundis = async (req, res, next) => {
       siblings.forEach((s) => excludeIds.add(String(s._id)));
     }
 
-    const fundis = await FundiProfile.find(query)
+    const fundis = await FundiProfile.find({ ...query, verificationStatus: "verified", isAvailable: true })
       .populate({
         path: "userId",
         match: {

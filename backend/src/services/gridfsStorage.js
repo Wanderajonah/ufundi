@@ -1,103 +1,100 @@
 const path = require("path");
-const mongoose = require("mongoose");
-const { GridFSBucket } = require("mongoose").mongo;
+const { randomUUID } = require("crypto");
+const { getSupabase, supabaseUrl } = require("../config/supabase");
 
-function getBucket(bucketName) {
-  if (mongoose.connection.readyState !== 1) {
-    const err = new Error("Database storage is not ready yet");
-    err.code = "GRIDFS_NOT_READY";
-    throw err;
+const STORAGE_BUCKETS = ["profiles", "chat", "bookings", "portfolio", "verification", "reviews"];
+
+const MIME_BY_EXT = {
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".gif": "image/gif",
+  ".webp": "image/webp",
+  ".pdf": "application/pdf",
+};
+
+/**
+ * Full public URL for a stored object. Mobile treats absolute http(s) URLs as
+ * external, so clients render these directly.
+ */
+function storageFileUrl(bucketName, key) {
+  return `${supabaseUrl()}/storage/v1/object/public/${bucketName}/${key}`;
+}
+
+/** Create the public buckets on first boot (idempotent). */
+async function ensureStorageBuckets() {
+  const client = getSupabase();
+  const { data: existing } = await client.storage.listBuckets();
+  const have = new Set((existing || []).map((b) => b.name));
+  for (const bucket of STORAGE_BUCKETS) {
+    if (have.has(bucket)) continue;
+    await client.storage.createBucket(bucket, { public: true }).then(
+      () => console.log(`Storage bucket "${bucket}" ready`),
+      () => {}
+    );
   }
-  return new GridFSBucket(mongoose.connection.db, { bucketName });
 }
 
 /**
- * Multer storage engine that persists files in MongoDB GridFS instead of the
- * local disk. Render (and other ephemeral hosts) wipe the filesystem on every
- * restart/redeploy, which made uploaded documents disappear. Storing in Mongo
- * keeps files available for the admin dashboard.
- *
- * The stored URL keeps the original extension so callers can detect image vs
- * PDF from the URL, e.g. /uploads/verification/<id>.jpg
+ * Multer storage engine backed by Supabase Storage instead of the local disk
+ * or GridFS. The stored key keeps the original extension so callers can detect
+ * image vs PDF from the key, e.g. <uuid>.jpg.
  */
 function gridFsStorage({ bucketName }) {
   return {
     _handleFile(req, file, cb) {
-      let bucket;
-      try {
-        bucket = getBucket(bucketName);
-      } catch (err) {
-        return cb(err);
-      }
-
-      const id = new mongoose.Types.ObjectId();
-      const ext = path.extname(file.originalname) || "";
-      const filename = `${id.toString()}${ext}`;
-
-      const uploadStream = bucket.openUploadStreamWithId(id, filename, {
-        contentType: file.mimetype || "application/octet-stream",
-        metadata: {
-          userId: req.user?._id ? String(req.user._id) : undefined,
-          originalName: file.originalname,
-          uploadedAt: new Date(),
-        },
+      const key = `${randomUUID()}${path.extname(file.originalname) || ""}`;
+      const chunks = [];
+      file.stream.on("data", (c) => chunks.push(c));
+      file.stream.on("error", cb);
+      file.stream.on("end", () => {
+        const buf = Buffer.concat(chunks);
+        getSupabase()
+          .storage.from(bucketName)
+          .upload(key, buf, {
+            contentType: file.mimetype || "application/octet-stream",
+            cacheControl: "31536000",
+            upsert: false,
+          })
+          .then(({ error }) => {
+            if (error) return cb(error);
+            return cb(null, { filename: key, key, size: buf.length, bucket: bucketName });
+          })
+          .catch(cb);
       });
-
-      file.stream
-        .pipe(uploadStream)
-        .on("error", cb)
-        .on("finish", () =>
-          cb(null, {
-            filename,
-            size: uploadStream.length,
-            path: `/uploads/${bucketName}/${filename}`,
-          }),
-        );
     },
 
     _removeFile(req, file, cb) {
-      try {
-        const bucket = getBucket(bucketName);
-        const id = String(file.filename || "").split(".")[0];
-        if (mongoose.Types.ObjectId.isValid(id)) {
-          bucket.delete(new mongoose.Types.ObjectId(id), (err) => cb(err));
-        } else {
-          cb(null);
-        }
-      } catch (err) {
-        cb(err);
-      }
+      if (!file || !file.key) return cb(null);
+      getSupabase()
+        .storage.from(file.bucket || bucketName)
+        .remove([file.key])
+        .then(() => cb(null))
+        .catch(cb);
     },
   };
 }
 
 /**
- * Express handler that streams a GridFS file for /uploads/<bucket>/<id>[.ext].
- * Calls next() when the file is not in GridFS so the static-file middleware can
- * serve legacy files that were stored on disk.
+ * Express handler that streams a stored object for legacy /uploads/<bucket>/<id>
+ * links. New code writes absolute public URLs; this keeps old URLs working.
  */
 async function streamGridFsFile(req, res, next) {
   const { subdir, fileId } = req.params;
+  if (!subdir || !fileId) return next();
+  const key = String(fileId).split("?")[0];
   try {
-    if (!subdir || !fileId) return next();
-    const idPart = String(fileId).split(".")[0];
-    if (!mongoose.Types.ObjectId.isValid(idPart)) return next();
-    if (mongoose.connection.readyState !== 1) return next();
-
-    const bucket = getBucket(subdir);
-    const files = await bucket
-      .find({ _id: new mongoose.Types.ObjectId(idPart) })
-      .toArray();
-    if (!files.length) return next();
-
-    const file = files[0];
-    res.set("Content-Type", file.contentType || "application/octet-stream");
-    res.set("Content-Length", String(file.length));
+    const { data, error } = await getSupabase().storage.from(subdir).download(key);
+    if (error || !data) return next();
+    const buf = Buffer.from(await data.arrayBuffer());
+    const contentType = MIME_BY_EXT[path.extname(key).toLowerCase()] || "application/octet-stream";
+    res.set("Content-Type", contentType);
+    res.set("Content-Length", String(buf.length));
     res.set("Cache-Control", "public, max-age=31536000, immutable");
-    bucket.openDownloadStream(file._id).pipe(res);
+    return res.send(buf);
   } catch (err) {
-    next(err);
+    return next(err);
   }
 }
 
-module.exports = { gridFsStorage, streamGridFsFile, getBucket };
+module.exports = { gridFsStorage, streamGridFsFile, storageFileUrl, ensureStorageBuckets, STORAGE_BUCKETS };

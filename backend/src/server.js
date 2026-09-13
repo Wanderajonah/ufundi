@@ -20,20 +20,14 @@ const bookingRoutes = require("./routes/bookingRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const walletRoutes = require("./routes/walletRoutes");
 const adminRoutes = require("./routes/adminRoutes");
-const { streamGridFsFile } = require("./services/gridfsStorage");
+const { streamGridFsFile, ensureStorageBuckets } = require("./services/gridfsStorage");
 
 const app = express();
 
-const fs = require("fs");
-const uploadDirs = ["profiles", "chat", "bookings", "portfolio", "verification"];
-const uploadRoot = path.join(__dirname, "../uploads");
-uploadDirs.forEach((dir) => {
-  const full = path.join(uploadRoot, dir);
-  if (!fs.existsSync(full)) fs.mkdirSync(full, { recursive: true });
-});
-console.log("Upload directories ensured");
+console.log("Upload storage: Supabase Storage");
 
-connectDB().then(() => {
+connectDB().then(async () => {
+  await ensureStorageBuckets();
   const bcrypt = require("bcryptjs");
   const User = require("./models/User");
   const name = process.env.ADMIN_NAME || "FundiLink Admin";
@@ -50,9 +44,8 @@ app.use(cors());
 app.use(express.json({ limit: "5mb" }));
 app.use(morgan("dev"));
 
-// Serve static files from uploads directory. New uploads live in MongoDB
-// GridFS (durable across restarts/redeploys); disk is kept as a fallback for
-// legacy files uploaded before GridFS.
+// Serve static files from uploads directory. New uploads live in Supabase
+// Storage (public URLs); disk is kept as a fallback for legacy files.
 app.use("/uploads/:subdir/:fileId", streamGridFsFile);
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
