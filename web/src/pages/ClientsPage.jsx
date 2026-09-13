@@ -3,7 +3,7 @@ import { RiAddLine, RiDeleteBinLine, RiEyeLine, RiForbidLine } from 'react-icons
 import Badge from '../components/Badge';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
-import { createUser, getClients, suspendClient } from '../services/api';
+import { createUser, deleteUser, getClients, suspendClient } from '../services/api';
 import { formatDate, formatUGX, getInitials, readList, toastMessage } from '../utils/format';
 
 const inputClass =
@@ -76,6 +76,17 @@ const ClientsPage = () => {
     }
   };
 
+  const handleDelete = async (client) => {
+    if (!window.confirm('Delete this client permanently?')) return;
+    try {
+      await deleteUser(client.id || client._id);
+      toastMessage('Client deleted.');
+      loadClients();
+    } catch (err) {
+      toastMessage(err.response?.data?.message || 'Unable to delete client.');
+    }
+  };
+
   const columns = [
     { key: 'index', header: '#', render: (_, index) => index + 1 },
     { key: 'name', header: 'Avatar+Name+Phone', render: (client) => <div className="flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-primary/20 text-primary font-bold text-xs flex items-center justify-center">{getInitials(client.name)}</div><div><div className="font-semibold text-white">{client.name || 'Client'}</div><div className="text-muted text-xs">{client.phone || 'N/A'}</div></div></div> },
@@ -83,7 +94,7 @@ const ClientsPage = () => {
     { key: 'bookings', header: 'Total Bookings', render: (client) => client.totalBookings || client.bookingsCount || 0 },
     { key: 'joined', header: 'Joined', render: (client) => formatDate(client.createdAt) },
     { key: 'status', header: 'Status', render: (client) => <Badge label={client.status || 'active'} type={(client.status || 'active') === 'suspended' ? 'danger' : 'success'} /> },
-    { key: 'actions', header: 'Actions', render: (client) => <div className="flex gap-1"><button onClick={() => setSelected(client)} className="p-1.5 text-muted hover:text-info transition-colors" aria-label="View client"><RiEyeLine /></button><button onClick={() => handleSuspend(client)} className="p-1.5 text-muted hover:text-danger transition-colors" aria-label="Suspend client"><RiForbidLine /></button><button onClick={() => window.confirm('Delete this client?') && toastMessage('Delete client endpoint is not available in the provided API service.')} className="p-1.5 text-muted hover:text-danger transition-colors" aria-label="Delete client"><RiDeleteBinLine /></button></div> },
+    { key: 'actions', header: 'Actions', render: (client) => <div className="flex gap-1"><button onClick={() => setSelected(client)} className="p-1.5 text-muted hover:text-info transition-colors" aria-label="View client"><RiEyeLine /></button><button onClick={() => handleSuspend(client)} className="p-1.5 text-muted hover:text-danger transition-colors" aria-label="Suspend client"><RiForbidLine /></button><button onClick={() => handleDelete(client)} className="p-1.5 text-muted hover:text-danger transition-colors" aria-label="Delete client"><RiDeleteBinLine /></button></div> },
   ];
 
   return (

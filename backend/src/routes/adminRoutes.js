@@ -9,6 +9,7 @@ const {
   getFundis,
   verifyFundi,
   deleteFundi,
+  deleteUser,
   getJobs,
   getBookings,
   updateBookingStatusAdmin,
@@ -43,6 +44,7 @@ router.patch("/users/:id/status", updateUserStatus);
 router.get("/fundis", getFundis);
 router.patch("/fundis/:id/verify", verifyFundi);
 router.delete("/fundis/:id", deleteFundi);
+router.delete("/users/:id", deleteUser);
 router.get("/jobs", getJobs);
 router.get("/bookings", getBookings);
 router.patch("/bookings/:id/status", updateBookingStatusAdmin);

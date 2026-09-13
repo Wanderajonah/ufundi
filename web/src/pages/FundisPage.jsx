@@ -3,10 +3,8 @@ import { RiAddLine, RiDeleteBinLine, RiEyeLine, RiShieldCheckLine, RiCloseCircle
 import Badge from '../components/Badge';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
-import { createUser, deleteFundi, getFundis, rejectFundi, verifyFundi } from '../services/api';
+import { API_BASE, createUser, deleteFundi, getFundis, rejectFundi, verifyFundi } from '../services/api';
 import { formatDate, getInitials, readList, toastMessage } from '../utils/format';
-
-const API_BASE = 'https://fundilinkug.onrender.com';
 
 const FundisPage = () => {
   const [fundis, setFundis] = useState([]);

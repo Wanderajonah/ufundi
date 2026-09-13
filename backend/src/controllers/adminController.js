@@ -685,6 +685,33 @@ const deleteFundi = async (req, res, next) => {
   }
 };
 
+const deleteUser = async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    const user = await User.findById(id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    if (user.role === "admin") {
+      return res.status(400).json({ message: "Admin accounts cannot be deleted" });
+    }
+    if (String(id) === String(req.user._id)) {
+      return res.status(400).json({ message: "You cannot delete your own account" });
+    }
+
+    await User.findByIdAndDelete(id);
+    await FundiProfile.findOneAndDelete({ userId: id });
+    if (typeof Wallet.findOneAndDelete === "function") {
+      await Wallet.findOneAndDelete({ userId: id }).catch(() => {});
+    }
+
+    return res.json({ message: "User deleted successfully" });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 const updateBookingStatusAdmin = async (req, res, next) => {
   try {
     const { status } = req.body;
@@ -829,6 +856,7 @@ module.exports = {
   getFundis,
   verifyFundi,
   deleteFundi,
+  deleteUser,
   getJobs,
   getBookings,
   updateBookingStatusAdmin,

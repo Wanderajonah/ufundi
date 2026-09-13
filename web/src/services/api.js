@@ -1,8 +1,16 @@
 import axios from 'axios';
 
+// Base URL for the admin dashboard API. Override per environment with
+// VITE_API_BASE (e.g. create web/.env.local with
+// VITE_API_BASE=http://localhost:5000 to run against a local backend).
+// Defaults to the production backend.
+const API_BASE = import.meta.env.VITE_API_BASE || 'https://fundilinkug.onrender.com';
+
 const api = axios.create({
-  baseURL: 'https://fundilinkug.onrender.com/api',
+  baseURL: `${API_BASE}/api`,
 });
+
+export { API_BASE };
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
@@ -39,6 +47,8 @@ export const deleteFundi = (id) => api.delete(`/admin/fundis/${id}`);
 
 export const getClients = (params) => api.get('/admin/users', { params });
 export const suspendClient = (id) => api.patch(`/admin/users/${id}/status`, { status: 'suspended' });
+export const reactivateClient = (id) => api.patch(`/admin/users/${id}/status`, { status: 'active' });
+export const deleteUser = (id) => api.delete(`/admin/users/${id}`);
 export const createUser = (data) => api.post('/admin/users', data);
 
 export const getBookings = (params) => api.get('/admin/bookings', { params });
