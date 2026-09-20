@@ -19,7 +19,7 @@
       "distribution": "internal",
       "channel": "preview",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://ufundiug.onrender.com/api",
+        "EXPO_PUBLIC_API_URL": "https://ufundi1.onrender.com/api",
         "EXPO_PUBLIC_MAP_PROVIDER": "maplibre",
         "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "400047786149-k9l5fkpdo19eoqlauv9joq50tne9461d.apps.googleusercontent.com",
         "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "400047786149-h3cv4q1go2pul769kc45pbc07hgki6pq.apps.googleusercontent.com"
@@ -34,7 +34,7 @@
     "production": {
       "channel": "production",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://ufundiug.onrender.com/api",
+        "EXPO_PUBLIC_API_URL": "https://ufundi1.onrender.com/api",
         "EXPO_PUBLIC_MAP_PROVIDER": "maplibre",
         "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "400047786149-k9l5fkpdo19eoqlauv9joq50tne9461d.apps.googleusercontent.com",
         "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "400047786149-h3cv4q1go2pul769kc45pbc07hgki6pq.apps.googleusercontent.com"
