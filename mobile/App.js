@@ -471,10 +471,8 @@ function AppContent() {
   // color; we only control button contrast via setStyle.
   useEffect(() => {
     if (Platform.OS === "android") {
-      NavigationBar.setStyle("light");
-      SystemUI.setBackgroundColorAsync("#000000").catch(() => {
-        /* non-blocking */
-      });
+      try { NavigationBar.setStyle?.("light"); } catch {}
+      SystemUI.setBackgroundColorAsync?.("#000000")?.catch?.(() => {});
     }
   }, []);
 

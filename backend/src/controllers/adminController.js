@@ -697,6 +697,11 @@ const deleteUserCascade = async (userId) => {
   }
   await Conversation.deleteMany({ lastSenderId: id });
 
+  // Null out FKs referencing bookings before deleting them
+  const { getSupabase } = require("../config/supabase");
+  await getSupabase().from("conversations").update({ bookingId: null }).not("bookingId", "is", null);
+  await getSupabase().from("transactions").update({ relatedBooking: null }).not("relatedBooking", "is", null);
+
   await Booking.deleteMany({ fundiId: id });
   await Booking.deleteMany({ clientId: id });
   await Job.deleteMany({ fundiId: id });
