@@ -7,7 +7,7 @@ function isConfigured() {
 async function generateSms(event, data, recipient) {
   if (!isConfigured()) return null;
 
-  const brand = process.env.AI_BRAND_NAME || "FundiLink";
+  const brand = process.env.AI_BRAND_NAME || "Ufundi";
   const model = process.env.GROQ_MODEL;
 
   const systemPrompt = `You are an SMS copywriter for ${brand}, a platform connecting clients with local fundis (artisans). 

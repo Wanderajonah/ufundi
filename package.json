@@ -1,8 +1,8 @@
 {
-  "name": "fundilink",
+  "name": "ufundi",
   "private": true,
   "version": "1.0.0",
-  "description": "FundiLink Uganda monorepo",
+  "description": "Ufundi Uganda monorepo",
   "scripts": {
     "start": "npm --prefix backend start",
     "postinstall": "npm --prefix backend install",

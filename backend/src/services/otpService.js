@@ -49,10 +49,10 @@ const issueOtp = async (phone, purpose) => {
     { upsert: true, new: true }
   );
 
-  const message = `Your FundiLink code is ${code}. Valid for 10 minutes. Do not share this code.`;
+  const message = `Your Ufundi code is ${code}. Valid for 10 minutes. Do not share this code.`;
 
   if (isDevMode()) {
-    console.log(`[FundiLink DEV OTP] ${normalized} (${purpose}): ${code}`);
+    console.log(`[Ufundi DEV OTP] ${normalized} (${purpose}): ${code}`);
   } else {
     await sendSms({ toNumber: normalized, message });
   }

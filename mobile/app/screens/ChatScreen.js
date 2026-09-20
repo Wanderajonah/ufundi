@@ -295,7 +295,7 @@ const SUGGESTED_TOPICS = [
   { icon: 'calendar-outline', label: 'How to book', prompt: 'How do I book a fundi?' },
   { icon: 'card-outline', label: 'Payments', prompt: 'How do payments work?' },
   { icon: 'time-outline', label: 'Response time', prompt: 'How long do fundis take to respond?' },
-  { icon: 'shield-checkmark-outline', label: 'Safety & trust', prompt: 'How do I stay safe on FundiLink?' },
+  { icon: 'shield-checkmark-outline', label: 'Safety & trust', prompt: 'How do I stay safe on Ufundi?' },
   { icon: 'briefcase-outline', label: 'Become a fundi', prompt: 'How do I become a fundi?' },
   { icon: 'call-outline', label: 'Talk to a human', prompt: 'I want to talk to a human agent.' },
 ];
@@ -348,7 +348,7 @@ export function SupportChat({ userId, inTab, onNavigate }) {
   const [messages, setMessages] = useState([
     {
       role: 'bot',
-      text: t("Hi! I'm FundiLink Support 👋. I can help you book a fundi, understand pricing and payments, or answer any question about the platform. You can also upload a photo of a problem (like a leaking pipe or broken socket) and I'll find a nearby fundi who can fix it."),
+      text: t("Hi! I'm Ufundi Support 👋. I can help you book a fundi, understand pricing and payments, or answer any question about the platform. You can also upload a photo of a problem (like a leaking pipe or broken socket) and I'll find a nearby fundi who can fix it."),
       time: new Date(),
     },
   ]);
@@ -714,16 +714,18 @@ export default function ChatScreen({ onNavigate, userRole, userId, targetUserId,
     <ScreenWrapper style={styles.safe} edges={['top', 'left', 'right']}>
       <View style={styles.headerRow}>
         <Text style={styles.headerTitle}>{t('Messages')}</Text>
-        <TouchableOpacity
-          style={styles.headerBtn}
-          onPress={() => setTab(tab === 'messages' ? 'support' : 'messages')}
-        >
-          <Ionicons
-            name={tab === 'support' ? 'chatbubbles' : 'headset-outline'}
-            size={22}
-            color={theme.colors.accent}
-          />
-        </TouchableOpacity>
+        {userRole !== 'fundi' && (
+          <TouchableOpacity
+            style={styles.headerBtn}
+            onPress={() => setTab(tab === 'messages' ? 'support' : 'messages')}
+          >
+            <Ionicons
+              name={tab === 'support' ? 'chatbubbles' : 'headset-outline'}
+              size={22}
+              color={theme.colors.accent}
+            />
+          </TouchableOpacity>
+        )}
       </View>
 
       {tab === 'messages' ? (
@@ -748,15 +750,15 @@ export default function ChatScreen({ onNavigate, userRole, userId, targetUserId,
             )}
           />
         )
-      ) : (
+      ) : userRole !== 'fundi' ? (
         <View style={{ flex: 1 }}>
           <View style={styles.supportHeader}>
             <Ionicons name="headset" size={20} color={theme.colors.accent} />
-            <Text style={styles.supportHeaderText}>{t('FundiLink Support')}</Text>
+            <Text style={styles.supportHeaderText}>{t('Ufundi Support')}</Text>
           </View>
           <SupportChat userId={userId} inTab={inTab} onNavigate={onNavigate} />
         </View>
-      )}
+      ) : null}
     </ScreenWrapper>
   );
 }

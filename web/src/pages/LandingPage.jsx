@@ -89,19 +89,19 @@ const testimonials = [
   {
     name: 'Sarah Nakamya',
     role: 'Homeowner, Kampala',
-    text: "My kitchen sink was flooding and I found a plumber on FundiLink in under 2 minutes. He arrived within the hour and fixed it perfectly. The escrow payment gave me so much peace of mind.",
+    text: "My kitchen sink was flooding and I found a plumber on Ufundi in under 2 minutes. He arrived within the hour and fixed it perfectly. The escrow payment gave me so much peace of mind.",
     rating: 5,
   },
   {
     name: 'David Okello',
     role: 'Fundi — Electrician',
-    text: "FundiLink changed my business. I used to struggle finding clients. Now bookings come to me automatically based on my location. I've tripled my monthly income in just 3 months.",
+    text: "Ufundi changed my business. I used to struggle finding clients. Now bookings come to me automatically based on my location. I've tripled my monthly income in just 3 months.",
     rating: 5,
   },
   {
     name: 'Grace Achieng',
     role: 'Property Manager, Entebbe',
-    text: "Managing multiple properties means constant repairs. FundiLink lets me dispatch fundis for all my units, track the jobs, and handle payments — all from one app. Incredibly efficient.",
+    text: "Managing multiple properties means constant repairs. Ufundi lets me dispatch fundis for all my units, track the jobs, and handle payments — all from one app. Incredibly efficient.",
     rating: 5,
   },
 ];
@@ -127,7 +127,7 @@ export default function LandingPage() {
                 <span className="text-bg-primary font-bold text-lg">F</span>
               </div>
               <span className="text-xl font-bold">
-                Fundi<span className="text-primary">Link</span>
+                Ufundi
               </span>
             </a>
 
@@ -243,7 +243,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              How <span className="text-primary">FundiLink</span> Works
+              How <span className="text-primary">Ufundi</span> Works
             </h2>
             <p className="text-muted text-lg max-w-xl mx-auto">
               Getting your home fixed has never been this easy. Three simple steps.
@@ -304,7 +304,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Why <span className="text-primary">FundiLink</span>?
+              Why <span className="text-primary">Ufundi</span>?
             </h2>
             <p className="text-muted text-lg max-w-xl mx-auto">
               Built for Uganda. Designed for trust. Powered by technology.
@@ -336,7 +336,7 @@ export default function LandingPage() {
               Loved by <span className="text-primary">Thousands</span>
             </h2>
             <p className="text-muted text-lg max-w-xl mx-auto">
-              Hear from customers and fundis who use FundiLink every day.
+              Hear from customers and fundis who use Ufundi every day.
             </p>
           </div>
 
@@ -374,7 +374,7 @@ export default function LandingPage() {
                 Ready to Get <span className="text-primary">Started</span>?
               </h2>
               <p className="text-muted text-lg max-w-xl mx-auto mb-8">
-                Join thousands of Ugandans who trust FundiLink for their home service needs.
+                Join thousands of Ugandans who trust Ufundi for their home service needs.
                 Download the app today.
               </p>
 
@@ -409,7 +409,7 @@ export default function LandingPage() {
                   <span className="text-bg-primary font-bold text-lg">F</span>
                 </div>
                 <span className="text-xl font-bold">
-                  Fundi<span className="text-primary">Link</span>
+                  Ufundi
                 </span>
               </div>
               <p className="text-muted text-sm leading-relaxed mb-4">
@@ -484,7 +484,7 @@ export default function LandingPage() {
                 </li>
                 <li className="flex items-center gap-2.5 text-muted text-sm">
                   <HiOutlineEnvelope className="text-primary text-base flex-shrink-0" />
-                  support@fundilink.ug
+                  support@ufundi.ug
                 </li>
                 <li className="flex items-start gap-2.5 text-muted text-sm">
                   <HiOutlineMapPin className="text-primary text-base flex-shrink-0 mt-0.5" />
@@ -506,7 +506,7 @@ export default function LandingPage() {
         <div className="border-t border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className="text-muted text-xs">
-              &copy; {new Date().getFullYear()} FundiLink Uganda. All rights reserved.
+              &copy; {new Date().getFullYear()} Ufundi Uganda. All rights reserved.
             </p>
             <div className="flex gap-5">
               {['Privacy Policy', 'Terms & Conditions'].map((link) => (

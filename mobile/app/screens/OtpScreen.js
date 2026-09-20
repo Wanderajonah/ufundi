@@ -25,6 +25,7 @@ export default function OtpScreen({
   phoneRaw = '',
   purpose = 'register',
   expiresIn = 600,
+  devCode: initialDevCode,
   onBack,
   onVerify,
   onResent,
@@ -37,6 +38,7 @@ export default function OtpScreen({
   const [seconds, setSeconds] = useState(expiresIn);
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
+  const [devCode, setDevCode] = useState(initialDevCode || null);
   const inputRefs = useRef([]);
   const hiddenRef = useRef(null);
   const { t } = useLanguage();
@@ -145,7 +147,7 @@ export default function OtpScreen({
         : await sendOtp(phoneRaw || phone, purpose);
       setSeconds(data.expiresIn || 600);
       if (data.devCode) {
-        Alert.alert(t('Dev mode'), t('Your code is: {{code}}', { code: data.devCode }));
+        setDevCode(data.devCode);
       }
       setDigits(emptyDigits(otpLength));
       onResent?.(data);
@@ -218,6 +220,13 @@ export default function OtpScreen({
         </View>
       </TouchableOpacity>
 
+      {devCode ? (
+        <View style={styles.devBanner}>
+          <Text style={styles.devBannerLabel}>{t('Dev mode code')}</Text>
+          <Text style={styles.devBannerCode}>{devCode}</Text>
+        </View>
+      ) : null}
+
       <Text style={styles.timer}>
         {t('Code expires in')} <Text style={styles.timerAccent}>{mm}:{ss}</Text>
       </Text>
@@ -267,6 +276,29 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   otpBoxDisabled: { opacity: 0.6 },
+  devBanner: {
+    backgroundColor: theme.colors.accentDim,
+    borderWidth: 1,
+    borderColor: 'rgba(255,184,0,0.35)',
+    borderRadius: 14,
+    padding: 12,
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  devBannerLabel: {
+    color: theme.colors.accent,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+  },
+  devBannerCode: {
+    color: theme.colors.white,
+    fontSize: 24,
+    fontWeight: '900',
+    letterSpacing: 8,
+    marginTop: 4,
+  },
   timer: { textAlign: 'center', color: theme.colors.muted, marginVertical: 20, fontSize: 13 },
   timerAccent: { color: theme.colors.accent, fontWeight: '700' },
   resend: { textAlign: 'center', color: theme.colors.muted, marginTop: 16, fontSize: 14 },

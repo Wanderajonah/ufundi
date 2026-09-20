@@ -11,11 +11,10 @@ import { useLanguage } from "../i18n/LanguageContext";
  * Collects first/last name up front (required by the phone-register
  * backend endpoint), then lets the user pick Phone or Google.
  *  - Phone path: name fields are required here, carried into the OTP
- *    register call. Email + DOB are collected afterward on
- *    FinishProfileScreen.
+ *    register call. After the one-time code, fundis continue to profile
+ *    setup and verification; clients go to location setup (no email/DOB).
  *  - Google path: name fields here are optional/skippable — Google
- *    supplies its own name + email, which will pre-fill FinishProfileScreen
- *    regardless of what (if anything) was typed here.
+ *    supplies its own name + email.
  */
 export default function CreateAccountChoiceScreen({
   role = "client",
@@ -51,7 +50,7 @@ export default function CreateAccountChoiceScreen({
 
   const handleGoogle = () => {
     // Name fields are optional for Google — Google's own profile data
-    // takes precedence on FinishProfileScreen regardless.
+    // takes precedence regardless.
     onGoogleContinue?.({ role });
   };
 
@@ -111,7 +110,7 @@ export default function CreateAccountChoiceScreen({
             <Text style={styles.cardTitle}>{t("Phone number")}</Text>
           </View>
           <Text style={styles.cardSubtext}>
-            {t("We'll text you a one-time code, then ask for your email and date of birth.")}
+            {t("We'll text you a one-time code to confirm your number.")}
           </Text>
           <AuthButton
             variant="phone"

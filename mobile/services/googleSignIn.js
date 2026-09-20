@@ -66,10 +66,10 @@ export function mapGoogleSignInError(error) {
     message.includes('The caller is not authorized') ||
     message.includes('developer console')
   ) {
-    return 'This build is not registered for Google Sign-In. Add an Android OAuth client in Google Cloud Console with package com.fundilink.uganda and the SHA-1 of the signing certificate this APK was built with (see mobile/.env.example), then rebuild.';
+    return 'This build is not registered for Google Sign-In. Add an Android OAuth client in Google Cloud Console with package com.ufundi.uganda and the SHA-1 of the signing certificate this APK was built with (see mobile/.env.example), then rebuild.';
   }
   if (message.includes('Native module')) {
-    return 'Google sign-in needs the FundiLink development or release build. It does not run in Expo Go.';
+    return 'Google sign-in needs the Ufundi development or release build. It does not run in Expo Go.';
   }
   if (message.includes('No matching browser activity found')) {
     return 'Google sign-in requires a browser app. Please install Chrome or another browser and try again.';

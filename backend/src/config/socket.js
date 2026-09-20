@@ -1,4 +1,4 @@
-const { setIo, notifyFundiLocation } = require("../services/notificationService");
+const { setIo, notifyFundiLocation, notifyNewMessage } = require("../services/notificationService");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const FundiProfile = require("../models/FundiProfile");
@@ -188,12 +188,12 @@ function initializeSocket(httpServer) {
           fundiPhone: fundi.phone
         });
         
-        // Auto-create conversation between client and fundi
+        // Auto-create a conversation between client and fundi (one per pair of
+        // users — a later booking reuses the existing chat, not a new one).
         try {
           const participants = [booking.clientId.toString(), socket.userId].sort();
           let conversation = await Conversation.findOne({
             participants: { $all: participants, $size: 2 },
-            bookingId: booking._id,
             type: "booking"
           });
           if (!conversation) {
@@ -342,12 +342,36 @@ function initializeSocket(httpServer) {
         await conversation.save();
 
         const populated = await Message.findById(message._id).populate("senderId", "name role");
+        const senderUser = populated.senderId || (await User.findById(socket.userId));
 
         // Emit to all participants in the conversation room
         io.to(`conversation:${conversationId}`).emit("new_message", {
           message: populated,
           conversationId
         });
+
+        // If the other participant is not currently viewing this thread, save
+        // a bell notification so they still see the message when they return.
+        const recipientId = (conversation.participants || []).find(
+          (p) => p.toString() !== socket.userId
+        );
+        if (recipientId) {
+          const recipient = await User.findById(recipientId);
+          const inRoom =
+            recipient?.socketId &&
+            Boolean(
+              io.sockets.adapter.rooms.get(`conversation:${conversationId}`)?.has(recipient.socketId)
+            );
+          if (!inRoom) {
+            await notifyNewMessage(recipientId, {
+              senderId: socket.userId,
+              senderName: senderUser?.name || "New message",
+              conversationId,
+              text,
+              imageUrl,
+            });
+          }
+        }
       } catch (error) {
         console.error("Error sending chat message:", error);
         socket.emit("error", { message: "Failed to send message" });

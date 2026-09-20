@@ -3,6 +3,7 @@ const Wallet = require("../models/Wallet");
 const Transaction = require("../models/Transaction");
 const Booking = require("../models/Booking");
 const PlatformSettings = require("../models/PlatformSettings");
+const { normalizePhone: normalizeUgandaPhone } = require("../services/otpService");
 
 const generateRef = (prefix) =>
   `${prefix}-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
@@ -269,7 +270,7 @@ const transfer = async (req, res, next) => {
     }
 
     const User = require("../models/User");
-    const recipient = await User.findOne({ phone: recipientPhone });
+    const recipient = await User.findOne({ phone: normalizeUgandaPhone(recipientPhone) });
     if (!recipient) {
       return res.status(404).json({ success: false, message: "Recipient not found" });
     }

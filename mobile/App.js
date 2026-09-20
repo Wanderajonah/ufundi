@@ -56,6 +56,11 @@ import {
   normalizeUgandaPhone,
 } from "./services/authApi";
 import { setAuthToken as setApiAuthToken } from "./services/api";
+// Push notifications disabled — import kept as no-op stub
+import {
+  registerForPushNotifications,
+  addNotificationResponseListener,
+} from "./services/pushService";
 import { getProfile } from "./services/usersApi";
 import {
   createReview,
@@ -75,6 +80,7 @@ import { BookingProvider } from "./context/BookingContext";
 import BookingToast from "./app/components/BookingToast";
 import { ChatProvider } from "./context/ChatContext";
 import { LanguageProvider } from "./app/i18n/LanguageContext";
+import { NotificationProvider } from "./context/NotificationContext";
 
 /** Screens only clients should use (browse, book, pay). */
 
@@ -97,6 +103,7 @@ const CLIENT_ONLY_SCREENS = new Set([
 function AppContent() {
   const [screen, setScreen] = useState("splash");
   const [userRole, setUserRole] = useState("customer");
+  const userRoleRef = useRef("customer");
   const [userName, setUserName] = useState("");
   const [userFullName, setUserFullName] = useState("");
   const [userEmail, setUserEmail] = useState("");
@@ -114,6 +121,7 @@ function AppContent() {
   const [googleOtpToken, setGoogleOtpToken] = useState("");
   const [otpChannel, setOtpChannel] = useState("phone");
   const [otpExpiresIn, setOtpExpiresIn] = useState(600);
+  const [otpDevCode, setOtpDevCode] = useState("");
   const [signupSubmitting, setSignupSubmitting] = useState(false);
   const [pendingUsers, setPendingUsers] = useState(null);
   const [authToken, setAuthToken] = useState("");
@@ -133,6 +141,7 @@ function AppContent() {
     coords,
   } = useLocation();
   const [selectedBookingId, setSelectedBookingId] = useState(null);
+  const [verificationFromSetup, setVerificationFromSetup] = useState(false);
   const [clientBookingDraft, setClientBookingDraft] = useState(null);
   const [chatTargetUserId, setChatTargetUserId] = useState(null);
 
@@ -220,7 +229,7 @@ function AppContent() {
     if (!locationOk) {
       Alert.alert(
         "Location required",
-        "FundiLink needs location access to show nearby services.",
+        "Ufundi needs location access to show nearby services.",
       );
       handleLogout();
       return role;
@@ -258,7 +267,7 @@ function AppContent() {
     if (!locationOk) {
       Alert.alert(
         "Location required",
-        "FundiLink needs location access to show nearby services.",
+        "Ufundi needs location access to show nearby services.",
       );
       handleLogout();
       return;
@@ -322,7 +331,10 @@ function AppContent() {
     if (key === "transfer") return setScreen("transfer");
     if (key === "transactionHistory") return setScreen("transactionHistory");
     if (key === "help") return setScreen("help");
-    if (key === "verification") return setScreen("verification");
+    if (key === "verification") {
+      setVerificationFromSetup(false);
+      return setScreen("verification");
+    }
     if (key === "createAccount") return setScreen("createAccount");
     if (key === "signIn") {
       if (!selectedRole) {
@@ -436,7 +448,9 @@ function AppContent() {
           setScreen(key);
         }}
       />
-      {authToken && userId ? <FloatingSupportChat userId={userId} onNavigate={handleNavigate} /> : null}
+      {authToken && userId && userRole !== "fundi" ? (
+        <FloatingSupportChat userId={userId} onNavigate={handleNavigate} />
+      ) : null}
     </View>
   );
 
@@ -445,19 +459,19 @@ function AppContent() {
     if (screen !== "chat") setChatTargetUserId(null);
   }, [screen]);
 
+  // Keep userRoleRef in sync so notification listener can read the latest role
+  useEffect(() => {
+    userRoleRef.current = userRole;
+  }, [userRole]);
+
   // Keep the Android system navigation bar in sync with the dark theme.
   // The app runs edge-to-edge, so the nav bar is transparent and Android paints
   // the app's background behind it. The background color is handled natively via
-  // the config plugin (values/styles.xml) + this root View's dark background.
-  // Here we only ensure light (white) nav-bar buttons on the dark background.
+  // Edge-to-edge is mandatory in SDK 57/Android 16. The OS owns the nav bar
+  // color; we only control button contrast via setStyle.
   useEffect(() => {
     if (Platform.OS === "android") {
-      NavigationBar.setBackgroundColorAsync("#000000").catch(() => {
-        /* non-blocking */
-      });
-      NavigationBar.setButtonStyleAsync("light").catch(() => {
-        /* non-blocking */
-      });
+      NavigationBar.setStyle("light");
       SystemUI.setBackgroundColorAsync("#000000").catch(() => {
         /* non-blocking */
       });
@@ -697,6 +711,10 @@ function AppContent() {
   };
   const tabPropsWithLogout = { ...tabProps, onLogout: handleLogout };
 
+  // Screen switch wrapped by NotificationProvider so every screen (and the
+  // persistent socket listener) has access to the notification feed.
+  const renderScreen = () => {
+
   if (screen === "splash") {
     return (
       <SplashScreen
@@ -807,8 +825,7 @@ function AppContent() {
             setOtpPhone(normalized);
             const { data: otpRes } = await sendOtp(normalized, "register");
             setOtpExpiresIn(otpRes.expiresIn || 600);
-            if (otpRes.devCode)
-              Alert.alert("Dev OTP", `Your code is: ${otpRes.devCode}`);
+            if (otpRes.devCode) setOtpDevCode(otpRes.devCode);
             setScreen("otp");
           } catch (error) {
             Alert.alert("Could not send OTP", getErrorMessage(error));
@@ -853,8 +870,7 @@ function AppContent() {
             setOtpPhone(normalized);
             const { data } = await sendOtp(normalized, "login");
             setOtpExpiresIn(data.expiresIn || 600);
-            if (data.devCode)
-              Alert.alert("Dev OTP", `Your code is: ${data.devCode}`);
+            if (data.devCode) setOtpDevCode(data.devCode);
             setScreen("otp");
           } catch (error) {
             Alert.alert("Could not send OTP", getErrorMessage(error));
@@ -868,7 +884,7 @@ function AppContent() {
             const { data } = await sendGoogleEmailLoginOtp(idToken);
             setOtpEmail(data.email);
             setOtpExpiresIn(data.expiresIn || 600);
-            if (data.devCode) Alert.alert("Dev OTP", `Your code is: ${data.devCode}`);
+            if (data.devCode) setOtpDevCode(data.devCode);
             setScreen("otp");
           } catch (error) {
             Alert.alert("Could not send email code", getErrorMessage(error));
@@ -883,7 +899,10 @@ function AppContent() {
       <FundiProfileSetupScreen
         authToken={authToken}
         onBack={() => setScreen("createAccount")}
-        onComplete={() => setScreen("verification")}
+        onComplete={() => {
+          setVerificationFromSetup(true);
+          setScreen("verification");
+        }}
       />
     );
   }
@@ -901,10 +920,14 @@ function AppContent() {
         purpose={otpPurpose}
         channel={otpChannel}
         expiresIn={otpExpiresIn}
+        devCode={otpDevCode}
         onBack={() =>
           setScreen(otpPurpose === "login" ? "signIn" : "phoneRegister")
         }
-        onResent={(data) => setOtpExpiresIn(data.expiresIn || 600)}
+        onResent={(data) => {
+          setOtpExpiresIn(data.expiresIn || 600);
+          if (data.devCode) setOtpDevCode(data.devCode);
+        }}
         onRequestResend={otpChannel === "email" ? () => sendGoogleEmailLoginOtp(googleOtpToken) : undefined}
         onVerify={async (code) => {
           if (otpPurpose === "register") {
@@ -1032,7 +1055,7 @@ function AppContent() {
   }
 
   if (screen === "notifications") {
-    return bookingWrap(<NotificationsScreen onNavigate={handleNavigate} userRole={userRole} />);
+    return <NotificationsScreen onNavigate={handleNavigate} userRole={userRole} />;
   }
 
   if (screen === "editProfile") {
@@ -1048,8 +1071,6 @@ function AppContent() {
       <SettingsScreen
         onNavigate={handleNavigate}
         userRole={userRole}
-        fundiEnabled={fundiEnabled}
-        onFundiEnabled={() => setFundiEnabled(true)}
       />
     );
   }
@@ -1063,7 +1084,19 @@ function AppContent() {
   }
 
   if (screen === "verification") {
-    return <VerificationScreen onNavigate={handleNavigate} />;
+    return (
+      <VerificationScreen
+        onNavigate={handleNavigate}
+        onBack={
+          verificationFromSetup
+            ? () => {
+                setVerificationFromSetup(false);
+                setScreen("fundiProfileSetup");
+              }
+            : undefined
+        }
+      />
+    );
   }
 
   if (screen === "wallet") {
@@ -1253,6 +1286,13 @@ function AppContent() {
   }
 
   return null;
+  };
+
+  return (
+    <NotificationProvider userId={userId} authToken={authToken}>
+      {renderScreen()}
+    </NotificationProvider>
+  );
 }
 
 export default function App() {

@@ -1,7 +1,7 @@
 /**
  * Lightweight Mongoose-compatible shim backed by Supabase PostgREST.
  *
- * Covers every Mongoose pattern actually used in the FundiLink backend:
+ * Covers every Mongoose pattern actually used in the Ufundi backend:
  *   find / findOne / findById + .sort/.select/.skip/.limit/.populate
  *   create / insertMany / new Model(data).save() (diff-based save)
  *   findOneAndUpdate / findByIdAndUpdate / updateOne / updateMany
@@ -872,7 +872,8 @@ function createModel(config) {
     async deleteOne(query) {
       const rows = await rawFind(query);
       if (!rows.length) return { deletedCount: 0 };
-      await getSupabase().from(tableName).delete().eq("id", rows[0].id);
+      const { error } = await getSupabase().from(tableName).delete().eq("id", rows[0].id);
+      if (error) throw error;
       return { deletedCount: 1 };
     },
 
@@ -894,14 +895,16 @@ function createModel(config) {
     async findByIdAndDelete(id) {
       const rows = await rawFind({ _id: String(id) });
       if (!rows.length) return null;
-      await getSupabase().from(tableName).delete().eq("id", rows[0].id);
+      const { error } = await getSupabase().from(tableName).delete().eq("id", rows[0].id);
+      if (error) throw error;
       return docFromRow(rows[0]);
     },
 
     async findOneAndDelete(query) {
       const rows = await rawFind(query);
       if (!rows.length) return null;
-      await getSupabase().from(tableName).delete().eq("id", rows[0].id);
+      const { error } = await getSupabase().from(tableName).delete().eq("id", rows[0].id);
+      if (error) throw error;
       return docFromRow(rows[0]);
     },
 

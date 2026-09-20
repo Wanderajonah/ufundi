@@ -25,8 +25,10 @@ import { emitSocket } from '../../services/socketService';
 import { computeEarnings, getGreeting } from '../utils/jobs';
 import { BOOKING_STATUS_LABELS } from '../utils/bookings';
 import { formatUgx, initials } from '../utils/ratings';
+import { getReviewsByFundi } from '../../services/reviewsApi';
 import theme from '../theme';
 import { useLanguage } from '../i18n/LanguageContext';
+import { useNotificationsOptional } from '../../context/NotificationContext';
 
 function toClockLabel(date, offsetMinutes = 0) {
   if (!date) return '';
@@ -86,11 +88,14 @@ export default function FundiDashboardScreen({
   onNavigate,
   userName,
   userFullName,
+  userId,
   fundiEnabled,
   onSwitchToClientMode,
 }) {
   const { t } = useLanguage();
   const { address } = useLocation();
+  const notificationCtx = useNotificationsOptional();
+  const unreadCount = notificationCtx?.unreadCount || 0;
   const {
     bookings,
     refreshBookings,
@@ -217,10 +222,23 @@ export default function FundiDashboardScreen({
         setAvailabilityMode(!isAvailable ? 'offline' : 'online');
       })
       .catch(() => {});
+    if (userId) {
+      getReviewsByFundi(userId)
+        .then(({ data: reviews }) => {
+          if (cancelled) return;
+          const list = Array.isArray(reviews) ? reviews : [];
+          if (list.length) {
+            const avg =
+              list.reduce((sum, r) => sum + (Number(r?.rating) || 0), 0) / list.length;
+            setFundiRating(Number(avg.toFixed(1)) || 0);
+          }
+        })
+        .catch(() => {});
+    }
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [userId]);
 
   const avgRating = fundiRating;
   const resolvedLocation = address || locationLabel || t('Set your location');
@@ -326,6 +344,11 @@ export default function FundiDashboardScreen({
             onPress={() => onNavigate?.('notifications')}
           >
             <Ionicons name="notifications-outline" size={20} color={theme.colors.white} />
+            {unreadCount > 0 && (
+              <View style={styles.bellBadge}>
+                <Text style={styles.bellBadgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
+              </View>
+            )}
           </TouchableOpacity>
         </View>
 
@@ -662,6 +685,25 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  bellBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    paddingHorizontal: 4,
+    backgroundColor: theme.colors.red,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: theme.colors.black,
+  },
+  bellBadgeText: {
+    color: theme.colors.white,
+    fontSize: 10,
+    fontWeight: '900',
   },
   body: {
     flex: 1,

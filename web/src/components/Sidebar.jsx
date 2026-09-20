@@ -76,7 +76,7 @@ const Sidebar = () => {
         <div className="px-6 py-5 border-b border-border">
           <div className="text-primary font-black text-lg flex items-center gap-2">
             <RiShieldStarLine />
-            <span>FundiLink UG</span>
+            <span>Ufundi UG</span>
           </div>
           <div className="text-muted text-xs mt-0.5">Admin Panel</div>
         </div>
@@ -110,7 +110,7 @@ const Sidebar = () => {
             </div>
             <div className="min-w-0">
               <div className="text-white text-sm font-semibold truncate">{admin?.name || 'Admin User'}</div>
-              <div className="text-muted text-xs truncate">{admin?.email || 'admin@fundilink.ug'}</div>
+              <div className="text-muted text-xs truncate">{admin?.email || 'admin@ufundi.ug'}</div>
             </div>
           </div>
           <button type="button" onClick={handleLogout} className="mt-3 w-full flex items-center gap-2 px-3 py-2 rounded-input text-danger text-sm hover:bg-danger/10 transition-colors duration-200">

@@ -20,6 +20,7 @@ import { formatUgx, formatBookingDate } from "../utils/ratings";
 import { getWallet } from "../../services/walletApi";
 import theme from "../theme";
 import { useBookingOptional } from "../../context/BookingContext";
+import { useNotificationsOptional } from "../../context/NotificationContext";
 import { useLocation } from "../../context/LocationContext";
 import { useLanguage } from "../i18n/LanguageContext";
 import { bookingRoute, bookingToActiveJob } from "../utils/bookings";
@@ -206,7 +207,7 @@ function HeroSlider({ onNavigate }) {
   );
 }
 
-function ListHeader({ userName, userRole, fundiEnabled, onNavigate, onSwitchToFundiMode, locationLabel, activeJob, activeJobs, bookingsLoading, walletBalance }) {
+function ListHeader({ userName, userRole, fundiEnabled, onNavigate, onSwitchToFundiMode, locationLabel, activeJob, activeJobs, bookingsLoading, walletBalance, unreadCount }) {
   const { t } = useLanguage();
   const bookingCtx = useBookingOptional();
 
@@ -235,7 +236,7 @@ function ListHeader({ userName, userRole, fundiEnabled, onNavigate, onSwitchToFu
       {/* 1. Header Row — logo + bell + balance below bell */}
       <View style={styles.headerRow}>
         <View style={styles.brandWrap}>
-          <Text style={styles.brandName}>FundiLink</Text>
+          <Text style={styles.brandName}>Ufundi</Text>
         </View>
         <View style={styles.headerRight}>
           <TouchableOpacity
@@ -244,6 +245,11 @@ function ListHeader({ userName, userRole, fundiEnabled, onNavigate, onSwitchToFu
             activeOpacity={0.85}
           >
             <Ionicons name="notifications-outline" size={22} color={theme.colors.accent} />
+            {unreadCount > 0 && (
+              <View style={styles.notifBadge}>
+                <Text style={styles.notifBadgeText}>{unreadCount > 99 ? "99+" : unreadCount}</Text>
+              </View>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -420,6 +426,8 @@ export default function HomeScreen({
   onSwitchToFundiMode,
 }) {
   const bookingCtx = useBookingOptional();
+  const notificationCtx = useNotificationsOptional();
+  const unreadCount = notificationCtx?.unreadCount || 0;
   const resolvedActiveJob = bookingCtx?.activeJob || activeJob;
   // All concurrent active bookings, mapped to the job shape used for banners.
   const resolvedActiveJobs = (bookingCtx?.activeBookings || []).map(bookingToActiveJob).filter(Boolean);
@@ -478,6 +486,7 @@ export default function HomeScreen({
             activeJobs={resolvedActiveJobs}
             bookingsLoading={bookingCtx?.loading}
             walletBalance={walletBalance}
+            unreadCount={unreadCount}
           />
         }
         contentContainerStyle={[
@@ -533,6 +542,25 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.glass,
     borderWidth: 1,
     borderColor: theme.colors.border,
+  },
+  notifBadge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    paddingHorizontal: 4,
+    backgroundColor: theme.colors.red,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1.5,
+    borderColor: theme.colors.bgDark,
+  },
+  notifBadgeText: {
+    color: theme.colors.white,
+    fontSize: 10,
+    fontWeight: "900",
   },
 
   /* Location + Balance row */

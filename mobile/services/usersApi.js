@@ -26,11 +26,10 @@ export const uploadCoverPicture = (formData) => {
 
 // Upload portfolio images (fundi)
 export const uploadPortfolioImages = (formData) => {
-  return api.post("/users/portfolio/upload", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
+  // Let Axios set multipart/form-data and its boundary. Supplying the header
+  // ourselves can omit the boundary on some React Native transports, leaving
+  // Multer unable to read the selected images.
+  return api.post("/users/portfolio/upload", formData, { timeout: 30000 });
 };
 
 // Delete a portfolio image by its stored URL (fundi)
@@ -57,3 +56,15 @@ export const requestVerification = (formData) => {
     },
   });
 };
+
+// In-app notification feed (the bell)
+export const getMyNotifications = () => api.get("/users/notifications");
+
+export const getUnreadNotificationCount = () =>
+  api.get("/users/notifications/unread-count");
+
+export const markNotificationRead = (id) =>
+  api.patch(`/users/notifications/${id}/read`);
+
+export const markAllNotificationsRead = () =>
+  api.patch("/users/notifications/read-all");

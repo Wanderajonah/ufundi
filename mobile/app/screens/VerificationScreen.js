@@ -61,7 +61,7 @@ const documentUpload = (asset) => {
   };
 };
 
-export default function VerificationScreen({ onNavigate }) {
+export default function VerificationScreen({ onNavigate, onBack }) {
   const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const [profile, setProfile] = useState(null);
@@ -154,7 +154,7 @@ export default function VerificationScreen({ onNavigate }) {
           <View style={styles.headerRow}>
             <TouchableOpacity
               style={styles.backBtn}
-              onPress={() => onNavigate?.('profile')}
+              onPress={() => (onBack ? onBack() : onNavigate?.('profile'))}
               activeOpacity={0.7}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >

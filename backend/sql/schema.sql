@@ -1,4 +1,4 @@
--- FundiLink Postgres schema (migrates the MongoDB models 1:1).
+-- Ufundi Postgres schema (migrates the MongoDB models 1:1).
 -- Columns are camelCase and quoted to mirror the Mongoose field names so the
 -- Mongoose-compatible shim stays thin. `migrate.js` runs this file idempotently.
 
@@ -276,7 +276,7 @@ create table if not exists email_otps (
 create table if not exists platform_settings (
   id                    text primary key default gen_random_uuid()::text,
   "adminName"           text not null default 'Admin User',
-  "adminEmail"          text not null default 'admin@fundilink.com',
+  "adminEmail"          text not null default 'admin@ufundi.com',
   "adminRole"           text not null default 'Super Admin',
   "commissionRate"      double precision not null default 0,
   "clientFeeRate"       double precision not null default 5,
@@ -306,6 +306,24 @@ create table if not exists admin_notifications (
 create index if not exists admin_notifications_read_idx on admin_notifications (read, created_at);
 
 -- ============================================================
+-- notifications (per-user in-app notification feed for the bell icon)
+-- ============================================================
+create table if not exists notifications (
+  id         text primary key default gen_random_uuid()::text,
+  "userId"   text not null references users (id) on delete cascade,
+  type       text not null check (type in ('booking','message','system')),
+  title      text not null,
+  body       text not null default '',
+  data       jsonb not null default '{}'::jsonb,
+  read       boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists notifications_user_read_idx
+  on notifications ("userId", read, created_at desc);
+
+-- ============================================================
 -- Row Level Security
 -- ============================================================
 -- The backend always connects with the service role key, which bypasses RLS.
@@ -323,6 +341,7 @@ alter table otps                  enable row level security;
 alter table email_otps            enable row level security;
 alter table platform_settings     enable row level security;
 alter table admin_notifications   enable row level security;
+alter table notifications         enable row level security;
 
 -- Optional cleanup jobs (requires the pg_cron extension):
 --   create extension if not exists pg_cron;

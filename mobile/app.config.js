@@ -25,24 +25,24 @@ const useGoogleMaps = mapProvider === 'google' && !!googleMapsApiKey;
 
 module.exports = {
   expo: {
-    name: 'FundiLink',
-    slug: 'fundilink',
+    name: 'Ufundi',
+    slug: 'ufundi',
     version: '1.0.1',
     orientation: 'portrait',
     userInterfaceStyle: 'dark',
-    scheme: 'fundilink',
+    scheme: 'ufundi',
     icon: './assets/icon.png',
     assetBundlePatterns: ['**/*'],
     runtimeVersion: '1.0.1',
     ios: {
       supportsTablet: true,
-      bundleIdentifier: 'com.fundilink.uganda',
+      bundleIdentifier: 'com.ufundi.uganda',
       ...(useGoogleMaps
         ? { config: { googleMapsApiKey } }
         : {}),
     },
     android: {
-      package: 'com.fundilink.uganda',
+      package: 'com.ufundi.uganda',
       ...(useGoogleMaps
         ? { config: { googleMaps: { apiKey: googleMapsApiKey } } }
         : {}),
@@ -52,14 +52,6 @@ module.exports = {
       },
       permissions: ['ACCESS_FINE_LOCATION', 'ACCESS_COARSE_LOCATION'],
       softwareKeyboardLayoutMode: 'resize',
-      // Keep a solid, app-controlled navigation bar in release APKs. Expo SDK 54
-      // enables edge-to-edge by default, which can otherwise show the screen
-      // beneath the system buttons instead of this configured black bar.
-      edgeToEdgeEnabled: false,
-      navigationBar: {
-        backgroundColor: '#000000',
-        barStyle: 'light-content',
-      },
       intentFilters: [
         {
           action: 'VIEW',
@@ -74,9 +66,10 @@ module.exports = {
         'expo-location',
         {
           locationWhenInUsePermission:
-            'FundiLink uses your location to find artisans near you.',
+            'Ufundi uses your location to find artisans near you.',
         },
       ],
+      'expo-font',
       'expo-web-browser',
       'expo-video',
       '@maplibre/maplibre-react-native',
@@ -89,23 +82,10 @@ module.exports = {
         'expo-navigation-bar',
         {
           backgroundColor: '#000000',
-          barStyle: 'light-content',
+          style: 'light',
         },
       ],
       './plugins/withAndroidNavigationBarTheme',
-      [
-        'expo-splash-screen',
-        {
-          backgroundColor: '#000000',
-          image: './assets/splash-icon.png',
-          imageWidth: 160,
-          resizeMode: 'contain',
-          dark: {
-            backgroundColor: '#000000',
-            image: './assets/splash-icon.png',
-          },
-        },
-      ],
     ],
     extra: {
       eas: {

@@ -29,7 +29,7 @@ const LoginPage = () => {
     <div className="min-h-screen bg-bg-primary flex items-center justify-center p-4">
       <form onSubmit={handleSubmit} className="bg-bg-card border border-border rounded-card p-10 w-full max-w-md shadow-card">
         <div className="mb-8">
-          <div className="text-primary text-3xl font-black">FundiLink</div>
+          <div className="text-primary text-3xl font-black">Ufundi</div>
           <div className="text-white text-sm">Uganda</div>
           <div className="text-muted text-xs uppercase tracking-widest mt-1">Admin Dashboard</div>
         </div>
@@ -46,7 +46,7 @@ const LoginPage = () => {
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           required
-          placeholder="admin@fundilink.ug"
+          placeholder="admin@ufundi.ug"
           className="w-full bg-bg-raised border border-border rounded-input px-4 py-3 text-white text-sm outline-none focus:border-primary transition-colors duration-200 placeholder:text-muted mb-5"
         />
         <label className="block text-muted text-xs font-bold uppercase tracking-wider mb-2" htmlFor="password">

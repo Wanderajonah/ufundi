@@ -305,8 +305,8 @@ const seed = async () => {
   await PlatformSettings.findOneAndUpdate(
     {},
     {
-      adminName: "FundiLink Admin",
-      adminEmail: "admin@fundilink.ug",
+      adminName: "Ufundi Admin",
+      adminEmail: "admin@ufundi.ug",
       commissionRate: 10,
       minJobAmount: 10000,
       serviceRadius: 20,

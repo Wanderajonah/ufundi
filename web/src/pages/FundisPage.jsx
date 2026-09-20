@@ -13,7 +13,7 @@ const FundisPage = () => {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('All');
   const [selected, setSelected] = useState(null);
-  const [verdictLoading, setVerdictLoading] = useState(false);
+  const [verdictAction, setVerdictAction] = useState('');
   const [addOpen, setAddOpen] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', phone: '' });
   const [submitting, setSubmitting] = useState(false);
@@ -86,7 +86,7 @@ const FundisPage = () => {
   const filteredFundis = fundis.filter((fundi) => `${fundi.name || ''} ${fundi.trade || ''}`.toLowerCase().includes(q));
 
   const handleVerdict = async (id, action, notes) => {
-    setVerdictLoading(true);
+    setVerdictAction(action);
     try {
       const fn = action === 'verify' ? verifyFundi : rejectFundi;
       await fn(id, notes);
@@ -96,7 +96,7 @@ const FundisPage = () => {
     } catch (err) {
       toastMessage(err.response?.data?.message || 'Action failed.');
     } finally {
-      setVerdictLoading(false);
+      setVerdictAction('');
     }
   };
 
@@ -181,17 +181,17 @@ const FundisPage = () => {
           <div className="flex gap-2">
             <button
               onClick={() => handleVerdict(fundi._id, 'verify', notes)}
-              disabled={verdictLoading}
+              disabled={!!verdictAction}
               className="flex items-center gap-1.5 px-4 py-2 bg-success text-white text-sm font-bold rounded-pill hover:bg-green-500 disabled:opacity-50 transition-colors"
             >
-              <RiShieldCheckLine /> {verdictLoading ? 'Processing...' : 'Approve'}
+              <RiShieldCheckLine /> {verdictAction === 'verify' ? 'Processing...' : 'Approve'}
             </button>
             <button
               onClick={() => handleVerdict(fundi._id, 'reject', notes)}
-              disabled={verdictLoading}
+              disabled={!!verdictAction}
               className="flex items-center gap-1.5 px-4 py-2 bg-danger text-white text-sm font-bold rounded-pill hover:bg-red-500 disabled:opacity-50 transition-colors"
             >
-              <RiCloseCircleLine /> {verdictLoading ? 'Processing...' : 'Reject'}
+              <RiCloseCircleLine /> {verdictAction === 'reject' ? 'Processing...' : 'Reject'}
             </button>
           </div>
         )}
@@ -252,17 +252,19 @@ const FundisPage = () => {
               <div className="bg-bg-raised rounded-input p-4">
                 <h3 className="text-white font-bold mb-3">Verification Documents</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {selected.verificationDocs.map((doc, i) => (
+                  {selected.verificationDocs.map((doc, i) => {
+                    const docUrl = doc.startsWith('http') ? doc : `${API_BASE}${doc}`;
+                    return (
                     <a
                       key={i}
-                      href={`${API_BASE}${doc}`}
+                      href={docUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="block bg-bg-primary border border-border rounded-input overflow-hidden hover:border-primary transition-colors group"
                     >
                       {isImage(doc) ? (
                         <div className="relative">
-                          <img src={`${API_BASE}${doc}`} alt={`Document ${i + 1}`} className="w-full h-32 object-cover" />
+                          <img src={docUrl} alt={`Document ${i + 1}`} className="w-full h-32 object-cover" />
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 flex items-center justify-center transition-colors">
                             <RiEyeLine className="text-white opacity-0 group-hover:opacity-100 text-lg transition-opacity" />
                           </div>
@@ -274,7 +276,7 @@ const FundisPage = () => {
                         </div>
                       )}
                     </a>
-                  ))}
+                    )})}
                 </div>
               </div>
             )}

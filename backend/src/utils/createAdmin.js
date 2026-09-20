@@ -6,8 +6,8 @@ const User = require("../models/User");
 const createAdmin = async () => {
   await connectDB();
 
-  const name = process.env.ADMIN_NAME || "FundiLink Admin";
-  const email = (process.env.ADMIN_EMAIL || "admin@fundilink.ug").toLowerCase();
+  const name = process.env.ADMIN_NAME || "Ufundi Admin";
+  const email = (process.env.ADMIN_EMAIL || "admin@ufundi.ug").toLowerCase();
   const password = process.env.ADMIN_PASSWORD || "password123";
 
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -15,7 +15,7 @@ const createAdmin = async () => {
     { email },
     {
       name,
-      firstName: name.split(" ")[0] || "FundiLink",
+      firstName: name.split(" ")[0] || "Ufundi",
       lastName: name.split(" ").slice(1).join(" ") || "Admin",
       email,
       password: hashedPassword,

@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DEFAULT_LANGUAGE, translate } from './translations';
 
-const STORAGE_KEY = '@fundilink_language';
+const STORAGE_KEY = '@ufundi_language';
 
 const LanguageContext = createContext({
   language: DEFAULT_LANGUAGE,

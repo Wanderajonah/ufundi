@@ -14,9 +14,10 @@ async function getOrCreateConversation(req, res) {
 
     if (targetUserId) {
       const participants = [userId, targetUserId].sort();
+      // One conversation per pair of users, regardless of how many times they
+      // have booked each other. Reuse any existing chat between them.
       let conversation = await Conversation.findOne({
         participants: { $all: participants, $size: 2 },
-        bookingId: bookingId || null,
         type: "booking"
       });
       if (!conversation) {
@@ -25,6 +26,9 @@ async function getOrCreateConversation(req, res) {
           bookingId: bookingId || null,
           type: "booking"
         });
+      } else if (bookingId && conversation.bookingId !== bookingId) {
+        conversation.bookingId = bookingId;
+        await conversation.save();
       }
       return res.json({ success: true, conversation });
     }
@@ -39,8 +43,12 @@ async function getOrCreateConversation(req, res) {
 async function getConversations(req, res) {
   try {
     const userId = req.user._id;
+    // Only surface chats where real messages were exchanged. Conversations are
+    // created automatically when a booking is accepted (or a profile message is
+    // opened) but must not clutter the inbox until someone actually messages.
     const conversations = await Conversation.find({
-      participants: userId
+      participants: userId,
+      lastMessage: { $ne: "" }
     })
       .populate("participants", "name phone role")
       .populate("lastSenderId", "name")

@@ -9,6 +9,9 @@ const Review = require("../models/Review");
 const Transaction = require("../models/Transaction");
 const Wallet = require("../models/Wallet");
 const PlatformSettings = require("../models/PlatformSettings");
+const AdminNotification = require("../models/AdminNotification");
+const Conversation = require("../models/Conversation");
+const Message = require("../models/Message");
 
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
@@ -280,7 +283,6 @@ const verifyFundi = async (req, res, next) => {
       return res.status(404).json({ message: "Fundi profile not found" });
     }
 
-    const AdminNotification = require("../models/AdminNotification");
     const fundi = await User.findById(id);
     const fundiName = fundi ? fundi.name : "A fundi";
     const notificationMessage = status === "verified"
@@ -672,13 +674,46 @@ const updateSettings = async (req, res, next) => {
   }
 };
 
+const deleteUserCascade = async (userId) => {
+  const id = String(userId);
+
+  await Transaction.deleteMany({ userId: id });
+  await Transaction.deleteMany({ relatedUser: id });
+  await Review.deleteMany({ fundiId: id });
+  await Review.deleteMany({ customerId: id });
+  await Message.deleteMany({ senderId: id });
+
+  const conversations = await Conversation.find({ participants: id });
+  for (const convo of conversations) {
+    const participants = Array.isArray(convo.participants)
+      ? convo.participants.filter((p) => String(p) !== id)
+      : [];
+    if (participants.length === 0) {
+      await Message.deleteMany({ conversationId: convo._id });
+      await convo.delete();
+    } else {
+      await Conversation.updateOne({ _id: convo._id }, { participants });
+    }
+  }
+  await Conversation.deleteMany({ lastSenderId: id });
+
+  await Booking.deleteMany({ fundiId: id });
+  await Booking.deleteMany({ clientId: id });
+  await Job.deleteMany({ fundiId: id });
+  await Job.deleteMany({ customerId: id });
+  await Wallet.deleteMany({ userId: id });
+  await FundiProfile.deleteMany({ userId: id });
+  await AdminNotification.deleteMany({ relatedId: id });
+};
+
 const deleteFundi = async (req, res, next) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
+    const user = await User.findById(req.params.id);
     if (!user) {
       return res.status(404).json({ message: "Fundi not found" });
     }
-    await FundiProfile.findOneAndDelete({ userId: user._id });
+    await deleteUserCascade(user._id);
+    await User.findByIdAndDelete(user._id);
     return res.json({ message: "Fundi deleted successfully" });
   } catch (error) {
     return next(error);
@@ -700,11 +735,8 @@ const deleteUser = async (req, res, next) => {
       return res.status(400).json({ message: "You cannot delete your own account" });
     }
 
+    await deleteUserCascade(id);
     await User.findByIdAndDelete(id);
-    await FundiProfile.findOneAndDelete({ userId: id });
-    if (typeof Wallet.findOneAndDelete === "function") {
-      await Wallet.findOneAndDelete({ userId: id }).catch(() => {});
-    }
 
     return res.json({ message: "User deleted successfully" });
   } catch (error) {

@@ -5,7 +5,7 @@ import theme from '../theme';
 
 /**
  * Brand lockup used on every auth/onboarding screen:
- * the wrench logo with the "FundiLink" wordmark pulled up
+ * the wrench logo with the "Ufundi" wordmark pulled up
  * into its bottom padding.
  */
 export default function BrandLockup({ size = 150, wordmarkSize = 24 }) {
@@ -13,7 +13,7 @@ export default function BrandLockup({ size = 150, wordmarkSize = 24 }) {
     <View style={styles.brand}>
       <AppLogo size={size} />
       <Text style={[styles.wordmark, { fontSize: wordmarkSize }]}>
-        Fundi<Text style={styles.wordmarkAccent}>Link</Text>
+        <Text style={styles.wordmarkAccent}>U</Text>fundi
       </Text>
     </View>
   );

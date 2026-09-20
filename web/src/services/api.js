@@ -4,7 +4,7 @@ import axios from 'axios';
 // VITE_API_BASE (e.g. create web/.env.local with
 // VITE_API_BASE=http://localhost:5000 to run against a local backend).
 // Defaults to the production backend.
-const API_BASE = import.meta.env.VITE_API_BASE || 'https://fundilinkug.onrender.com';
+const API_BASE = import.meta.env.VITE_API_BASE || 'https://ufundiug.onrender.com';
 
 const api = axios.create({
   baseURL: `${API_BASE}/api`,

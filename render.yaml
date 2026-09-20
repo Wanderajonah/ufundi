@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: fundilink-api
+    name: ufundi-api
     runtime: node
     repo: https://github.com/Wanderajonah/ufundi
     branch: master
@@ -32,6 +32,6 @@ services:
       - key: EMAIL_OTP_FROM
         sync: false
       - key: ADMIN_EMAIL
-        value: admin@fundilink.ug
+        value: admin@ufundi.ug
       - key: ADMIN_PASSWORD
         sync: false

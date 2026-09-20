@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Linking,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -30,6 +32,61 @@ const ROUTE_REFRESH_M = 80;
 // tracking reads booking.fundiLocation).
 const SYNC_MIN_INTERVAL_MS = 15000;
 
+const haversineMeters = (a, b) => {
+  const R = 6371000;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const la1 = (a.lat * Math.PI) / 180;
+  const la2 = (b.lat * Math.PI) / 180;
+  const h =
+    Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+};
+
+// Cumulative distance along `points` up to the vertex nearest to `point`.
+const pathMetersFrom = (points, point) => {
+  let best = -1;
+  let bestD = Infinity;
+  for (let i = 0; i < points.length; i += 1) {
+    const d = haversineMeters(points[i], point);
+    if (d < bestD) {
+      bestD = d;
+      best = i;
+    }
+  }
+  let meters = 0;
+  for (let i = 1; i <= Math.max(0, best); i += 1) {
+    meters += haversineMeters(points[i - 1], points[i]);
+  }
+  return { meters, snapDistance: bestD };
+};
+
+const formatMetres = (m) =>
+  m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`;
+
+const maneuverIcon = (maneuver = '') => {
+  switch (maneuver) {
+    case 'turn-left':
+    case 'turn-sharp-left':
+    case 'turn-slight-left':
+    case 'uturn-left':
+      return 'arrow-undo';
+    case 'turn-right':
+    case 'turn-sharp-right':
+    case 'turn-slight-right':
+    case 'uturn-right':
+      return 'arrow-redo';
+    case 'merge':
+      return 'git-merge';
+    case 'fork-left':
+      return 'git-branch';
+    case 'arrive':
+      return 'flag';
+    default:
+      return 'navigate';
+  }
+};
+
 export default function FundiNavigationScreen({
   route: navRoute,
   onNavigate,
@@ -45,6 +102,7 @@ export default function FundiNavigationScreen({
   const [routeInfo, setRouteInfo] = useState(null);
   const [routeLoading, setRouteLoading] = useState(false);
   const [arriving, setArriving] = useState(false);
+  const [shownStepIndex, setShownStepIndex] = useState(0);
 
   const watchRef = useRef(null);
   const lastRouteQueryRef = useRef(null);
@@ -133,6 +191,7 @@ export default function FundiNavigationScreen({
         distanceKm: data?.distanceKm ?? null,
         etaMinutes: data?.etaMinutes ?? null,
         polyline: Array.isArray(data?.polyline) ? data.polyline : null,
+        steps: Array.isArray(data?.steps) ? data.steps : null,
       });
     } catch {
       setRouteInfo(null);
@@ -159,6 +218,91 @@ export default function FundiNavigationScreen({
     if (myCoords && destination) return [myCoords, destination];
     return null;
   }, [routeInfo, myCoords, destination]);
+
+  // GPS + Directions steps with a final "arrive at client" step added.
+  const routeSteps = useMemo(() => {
+    const steps = Array.isArray(routeInfo?.steps) ? routeInfo.steps.slice() : [];
+    if (!destination) return steps;
+    const last = steps[steps.length - 1];
+    const atDest =
+      last?.end &&
+      Math.abs(last.end.lat - destination.lat) < 1e-7 &&
+      Math.abs(last.end.lng - destination.lng) < 1e-7;
+    if (atDest) return steps;
+    return [
+      ...steps,
+      {
+        instruction: t('Arrive at {{name}}', {
+          name: booking?.clientName || t("Client's location"),
+        }),
+        maneuver: 'arrive',
+        distanceMeters: last?.distanceMeters ?? null,
+        start: last?.end || myCoords || destination,
+        end: destination,
+      },
+    ];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeInfo?.steps, destination, myCoords, booking?.clientName]);
+
+  // Approximate progress (metres) of each step boundary along the route line.
+  const stepBoundaries = useMemo(() => {
+    if (!routeLine || routeLine.length < 2 || !routeSteps.length) return [];
+    const res = [];
+    let prev = 0;
+    for (const step of routeSteps) {
+      let m = 0;
+      if (step.start) {
+        const match = pathMetersFrom(routeLine, step.start);
+        m = match.snapDistance < 40 ? match.meters : 0;
+      }
+      const boundary = m || prev + (step.distanceMeters || 0);
+      res.push(boundary);
+      prev = boundary;
+    }
+    return res;
+  }, [routeLine, routeSteps]);
+
+  // How far along the route the fundi currently is.
+  const myProgressMeters = useMemo(() => {
+    if (!myCoords || !routeLine || routeLine.length < 2) return 0;
+    return pathMetersFrom(routeLine, myCoords).meters;
+  }, [myCoords, routeLine]);
+
+  // Advance the highlighted maneuver as the fundi passes each step boundary.
+  useEffect(() => {
+    if (!stepBoundaries.length) return;
+    let next = 0;
+    for (let i = 0; i < stepBoundaries.length; i += 1) {
+      if (myProgressMeters > stepBoundaries[i] + 15) next = i + 1;
+      else break;
+    }
+    const clamped = Math.min(next, routeSteps.length - 1);
+    setShownStepIndex((cur) => (cur !== clamped ? clamped : cur));
+  }, [stepBoundaries, myProgressMeters, routeSteps.length]);
+
+  const nextStep = routeSteps[shownStepIndex] || null;
+  const remainingToStep = nextStep
+    ? Math.max(0, (stepBoundaries[shownStepIndex] || 0) - myProgressMeters)
+    : null;
+  const showTurnBanner =
+    !!nextStep?.instruction && routeSteps.length > 0 && myCoords && !!destination;
+
+  const openGoogleMaps = () => {
+    if (!destination) return;
+    Linking.openURL(
+      `https://www.google.com/maps/dir/?api=1&destination=${destination.lat},${destination.lng}&travelmode=driving`,
+    ).catch(() => Alert.alert(t('Could not open maps')));
+  };
+
+  const openWaze = () => {
+    if (!destination) return;
+    Linking.openURL(`waze://?ll=${destination.lat},${destination.lng}&navigate=yes`).catch(
+      () =>
+        Linking.openURL(
+          `https://waze.com/ul?ll=${destination.lat},${destination.lng}&navigate=yes`,
+        ).catch(() => Alert.alert(t('Could not open Waze'))),
+    );
+  };
 
   const handleArrived = async () => {
     if (!booking?.id && !booking?._id) return;
@@ -242,8 +386,26 @@ export default function FundiNavigationScreen({
         </View>
       </View>
 
+      {showTurnBanner && (
+        <View style={[styles.turnBanner, { top: insets.top + 92 }]}>
+          <View style={styles.turnIcon}>
+            <Ionicons name={maneuverIcon(nextStep?.maneuver)} size={18} color={fc.text} />
+          </View>
+          <View style={{ flex: 1, paddingRight: 4 }}>
+            <Text style={styles.turnDist}>
+              {remainingToStep != null && remainingToStep > 25
+                ? t('{{dist}} ahead', { dist: formatMetres(remainingToStep) })
+                : t('Turn now')}
+            </Text>
+            <Text style={styles.turnText} numberOfLines={2}>
+              {nextStep?.instruction}
+            </Text>
+          </View>
+        </View>
+      )}
+
       {(gpsError || !destination) && (
-        <View style={[styles.warnBox, { top: insets.top + 84 }]}>
+        <View style={[styles.warnBox, { top: insets.top + 156 }]}>
           <Ionicons name="warning-outline" size={14} color={theme.colors.accent} />
           <Text style={styles.warnText}>
             {!destination
@@ -273,6 +435,19 @@ export default function FundiNavigationScreen({
             <ActivityIndicator size="small" color={theme.colors.mutedDark} style={{ marginLeft: 'auto' }} />
           ) : null}
         </View>
+
+        {destination && Platform.OS !== 'web' ? (
+          <View style={styles.navAppsRow}>
+            <TouchableOpacity style={styles.navAppBtn} onPress={openGoogleMaps} activeOpacity={0.8}>
+              <Ionicons name="logo-google" size={17} color="#4285F4" />
+              <Text style={styles.navAppText}>{t('Google Maps')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.navAppBtn} onPress={openWaze} activeOpacity={0.8}>
+              <Ionicons name="car" size={17} color="#33AAFF" />
+              <Text style={styles.navAppText}>{t('Waze')}</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
 
         <PrimaryButton
           onPress={handleArrived}
@@ -318,6 +493,29 @@ const styles = StyleSheet.create({
   topLabel: { color: fc.textMuted, fontSize: 10, fontWeight: '800', letterSpacing: 0.8 },
   topName: { color: fc.text, fontSize: 15, fontWeight: '900', marginTop: 1 },
   topAddress: { color: fc.textMuted, fontSize: 12, marginTop: 2 },
+  turnBanner: {
+    position: 'absolute',
+    left: 14,
+    right: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 12,
+    borderRadius: theme.radius.lg,
+    backgroundColor: 'rgba(255,184,0,0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,184,0,0.45)',
+  },
+  turnIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.colors.accent,
+  },
+  turnDist: { color: '#FFD977', fontSize: 11, fontWeight: '800', letterSpacing: 0.4 },
+  turnText: { color: fc.text, fontSize: 14, fontWeight: '900', marginTop: 1 },
   warnBox: {
     position: 'absolute',
     left: 14,
@@ -358,5 +556,19 @@ const styles = StyleSheet.create({
   },
   etaValue: { color: fc.text, fontSize: 16, fontWeight: '900' },
   etaLabel: { color: fc.textMuted, fontSize: 11, fontWeight: '700' },
+  navAppsRow: { flexDirection: 'row', gap: 10, marginBottom: 12 },
+  navAppBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    height: 42,
+    borderRadius: theme.radius.md,
+    backgroundColor: fc.page,
+    borderWidth: 1,
+    borderColor: fc.border,
+  },
+  navAppText: { color: fc.text, fontSize: 13, fontWeight: '800' },
   arriveBtn: { height: 54 },
 });

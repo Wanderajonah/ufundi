@@ -71,7 +71,7 @@ export default function PaymentScreen({ booking = {}, onBack, onPay, loading = f
       if (!msg && error?.code === 'ECONNABORTED') {
         msg = t('The request timed out. Check your connection and try again.');
       } else if (!msg && !error?.response) {
-        msg = t('Cannot reach FundiLink servers. Check your internet connection.');
+        msg = t('Cannot reach Ufundi servers. Check your internet connection.');
       } else if (!msg) {
         msg = t('Could not complete the payment. Please try again.');
       }

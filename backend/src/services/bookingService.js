@@ -270,9 +270,10 @@ async function ensureBookingConversation(booking) {
   try {
     if (!booking.fundiId || !booking.clientId) return null;
     const participants = [booking.clientId.toString(), booking.fundiId.toString()].sort();
+    // One conversation per pair of users. Rebooking the same fundi (or a new
+    // booking) reuses the existing chat instead of creating another one.
     let conversation = await Conversation.findOne({
       participants: { $all: participants, $size: 2 },
-      bookingId: booking._id,
       type: "booking",
     });
     if (!conversation) {
@@ -281,6 +282,9 @@ async function ensureBookingConversation(booking) {
         bookingId: booking._id,
         type: "booking",
       });
+    } else if (!conversation.bookingId) {
+      conversation.bookingId = booking._id;
+      await conversation.save();
     }
     return conversation;
   } catch (error) {

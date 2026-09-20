@@ -38,7 +38,7 @@ export default function SignInScreen({
     if (isExpoGo) {
       Alert.alert(
         t('Dev build required'),
-        t('Google sign-in needs the FundiLink development or release build, not Expo Go.'),
+        t('Google sign-in needs the Ufundi development or release build, not Expo Go.'),
       );
       return;
     }
@@ -84,6 +84,7 @@ export default function SignInScreen({
 
       <AuthHeader
         onBack={onBack}
+        title={t('Welcome back')}
         subtitle={
           isFundi
             ? t('Sign in to your fundi dashboard')

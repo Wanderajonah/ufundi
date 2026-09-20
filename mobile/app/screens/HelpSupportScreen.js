@@ -61,7 +61,7 @@ export default function HelpSupportScreen({ onNavigate, userRole = 'customer' })
             <Ionicons name="mail-outline" size={16} color={theme.colors.accent} />
             <Text style={[styles.contactText, isFundi && styles.fundiText]}>{t('Email Support')}</Text>
           </View>
-          <Text style={[styles.contactSub, isFundi && styles.fundiSub]}>support@fundlink.com</Text>
+          <Text style={[styles.contactSub, isFundi && styles.fundiSub]}>support@ufundi.com</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.contactRow, isFundi && styles.fundiRow]}>
           <View style={styles.contactLeft}>

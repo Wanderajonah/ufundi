@@ -48,7 +48,7 @@ function isConfigured() {
   return !!(process.env.GROQ_API_KEY && process.env.GROQ_MODEL);
 }
 
-const SYSTEM_PROMPT = `You are a helpful customer support assistant for FundiLink, a platform that connects clients with local fundis (artisans/skilled workers) in Uganda.
+const SYSTEM_PROMPT = `You are a helpful customer support assistant for Ufundi, a platform that connects clients with local fundis (artisans/skilled workers) in Uganda.
 
 Your role:
 - Help users understand how the platform works
@@ -72,7 +72,7 @@ Common issues:
 - Prices can be negotiated between client and fundi after acceptance
 - Cancellations can be made by either party before the job starts`;
 
-const VISION_SYSTEM_PROMPT = `You are the FundiLink problem-detection assistant. A customer uploads a photo of a home or property problem (e.g. a leaking pipe, broken socket, cracked wall, damaged furniture).
+const VISION_SYSTEM_PROMPT = `You are the Ufundi problem-detection assistant. A customer uploads a photo of a home or property problem (e.g. a leaking pipe, broken socket, cracked wall, damaged furniture).
 
 Look at the image carefully and:
 1. Identify what is wrong in plain, friendly language.
@@ -326,7 +326,7 @@ function fallbackResponse(messages) {
       reply: "To book a fundi: go to Browse, choose a category (plumbing, electrical, carpentry, painting...), pick a fundi near you, describe your job, and send the request. They'll respond within 5 minutes.",
     },
     {
-      keys: ["become a fundi", "join as fundi", "sign up as fundi", "register as fundi", "work with fundilink", "earn money", "how do i earn"],
+      keys: ["become a fundi", "join as fundi", "sign up as fundi", "register as fundi", "work with ufundi", "earn money", "how do i earn"],
       reply: "You can register as a fundi during sign up or switch roles in the app. Complete your profile, add your skills and portfolio, then go online to start receiving booking requests from clients nearby.",
     },
     {
@@ -343,11 +343,11 @@ function fallbackResponse(messages) {
     },
     {
       keys: ["plumber", "plumbing", "electrician", "electrical", "carpenter", "carpentry", "painter", "painting", "mechanic", "welder", "tiles", "masonry"],
-      reply: "FundiLink has skilled fundis across categories like plumbing, electrical, carpentry, and painting. Go to Browse, pick the category you need, and choose a verified fundi near you.",
+      reply: "Ufundi has skilled fundis across categories like plumbing, electrical, carpentry, and painting. Go to Browse, pick the category you need, and choose a verified fundi near you.",
     },
     {
       keys: ["fundi", "artisan", "worker", "skilled"],
-      reply: "Fundis are vetted skilled workers on FundiLink. Browse them by category, compare ratings and reviews, and pick the best fit near you.",
+      reply: "Fundis are vetted skilled workers on Ufundi. Browse them by category, compare ratings and reviews, and pick the best fit near you.",
     },
     {
       keys: ["how long", "how fast", "response time", "minute", "wait", "quickly", "respond"],
@@ -355,7 +355,7 @@ function fallbackResponse(messages) {
     },
     {
       keys: ["location", "near", "distance", "far", "nearby"],
-      reply: "FundiLink matches you with fundis near your location. You'll see each fundi's distance before you choose, so you can pick the closest one.",
+      reply: "Ufundi matches you with fundis near your location. You'll see each fundi's distance before you choose, so you can pick the closest one.",
     },
     {
       keys: ["forgot password", "reset password", "can't log in", "cannot log in", "login", "otp", "verification code", "code not working"],
@@ -363,7 +363,7 @@ function fallbackResponse(messages) {
     },
     {
       keys: ["safe", "secure", "trust", "scam", "verified", "verification"],
-      reply: "FundiLink profiles show ratings, reviews, completed jobs, and verification status so you can choose trusted fundis. Always communicate and agree terms inside the app.",
+      reply: "Ufundi profiles show ratings, reviews, completed jobs, and verification status so you can choose trusted fundis. Always communicate and agree terms inside the app.",
     },
     {
       keys: ["rating", "review", "rate", "stars"],
@@ -371,7 +371,7 @@ function fallbackResponse(messages) {
     },
     {
       keys: ["hello", "hi", "hey", "good morning", "good afternoon", "good evening", "how are you"],
-      reply: "Hello! Welcome to FundiLink. I'm here to help with bookings, pricing, payments, and anything else about the platform. What can I do for you?",
+      reply: "Hello! Welcome to Ufundi. I'm here to help with bookings, pricing, payments, and anything else about the platform. What can I do for you?",
     },
     {
       keys: ["help", "menu", "options", "what can you do", "what do you do", "how does it work", "how it works"],
@@ -379,7 +379,7 @@ function fallbackResponse(messages) {
     },
     {
       keys: ["thank", "thanks", "appreciate"],
-      reply: "You're welcome! If you need anything else, just ask. Enjoy using FundiLink!",
+      reply: "You're welcome! If you need anything else, just ask. Enjoy using Ufundi!",
     },
   ];
 

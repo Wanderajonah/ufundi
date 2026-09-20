@@ -42,7 +42,7 @@ export default function FloatingSupportChat({ userId, onNavigate }) {
           <View style={[styles.header, { paddingTop: insets.top }]}>
             <View style={styles.headerLeft}>
               <Ionicons name="headset" size={20} color={theme.colors.accent} />
-              <Text style={styles.title}>{t('FundiLink Support')}</Text>
+              <Text style={styles.title}>{t('Ufundi Support')}</Text>
             </View>
             <TouchableOpacity style={styles.closeBtn} onPress={() => setOpen(false)}>
               <Ionicons name="close" size={22} color={theme.colors.white} />

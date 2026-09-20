@@ -241,6 +241,21 @@ const enableFundi = async (req, res, next) => {
   }
 };
 
+const registerPushToken = async (req, res, next) => {
+  try {
+    const { token } = req.body;
+    if (!token || typeof token !== "string" || !token.trim()) {
+      return res.status(400).json({ message: "Push token is required" });
+    }
+    await User.findByIdAndUpdate(req.user._id, {
+      pushToken: token.trim(),
+    });
+    return res.json({ success: true });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   getProfile,
   updateProfile,
@@ -251,4 +266,5 @@ module.exports = {
   deletePortfolioImage,
   requestVerification,
   enableFundi,
+  registerPushToken,
 };

@@ -30,7 +30,7 @@ export const translations = {
     'Switch to fundi view to manage jobs': 'Kyusa okuyingira mu Fundi okulondoola emirimu',
     'Client Mode': 'Enkola ya Mukozesa',
     'Switch back to browsing and booking jobs as a client': 'Komawo okulaba n\'okusaba emirimu nga mukozesa',
-    'Welcome to FundiLink!': 'Tukulamusizza ku FundiLink!',
+    'Welcome to Ufundi!': 'Tukulamusizza ku Ufundi!',
     'Accept your first job to start earning. Your earnings and stats will appear here.': 'Kkiriza omulimu gwo ogusooka otandike okufuna ssente. Ebijjio byo n\'eby\'enkolagana birirabikira wano.',
     'View Available Jobs': 'Laba Emirimu Ebiri',
     'Choose your account': 'Londa akaunti yo',
@@ -56,6 +56,21 @@ export const translations = {
     'Profile': 'Obubonero',
     'Jobs': 'Emirimu',
     'Notifications Tab': 'Obubaka',
+
+    // --- Fundi navigation ---
+    'Arrive at {{name}}': 'Tuuka ku {{name}}',
+    "Client's location": "ekifo ekiri w'omukozesa",
+    '{{dist}} ahead': '{{dist}} mumaaso',
+    'Turn now': 'Kutuka kati',
+    'Could not open maps': 'Tetwasobola kuggulawo maapu',
+    'Could not open Waze': 'Tetwasobola kuggulawo Waze',
+    'Google Maps': 'Google Maps',
+    'Waze': 'Waze',
+    'I have arrived': 'Nzudde',
+    'You have arrived': 'Ozudde',
+    'Mark the job as started from your dashboard when you begin work.': 'Laga omulimu nga gwakatandika okuva ku dashibodi yo nga otandise okukola.',
+    'Navigating to': 'Okugenda ewa',
+    'away': 'bwe wala',
 
     // --- Home ---
     'Hello': 'Naawe',
@@ -215,7 +230,7 @@ export const translations = {
 
     // --- Chat / support ---
     'Support': 'Obuyambi',
-    'FundiLink Support': 'Obuyambi bwa FundiLink',
+    'Ufundi Support': 'Obuyambi bwa Ufundi',
     'Type a message...': 'Wandiika obubaka...',
     'Try asking about': 'Gezaako okubuuza ku',
     'Upload a photo': 'Tongera ekifaananyi',
@@ -308,6 +323,12 @@ export const translations = {
     'Remove this photo from your portfolio?': 'Ogyawo ekifaananyi kino mu portfolio yo?',
     'Skills & Portfolio': 'Obukugu n\'Ebyakola',
     'No skills added yet': 'Tebinabikwongeddwa byakola',
+    'Add a skill': 'Yongerako obukugu',
+    'Add skill': 'Yongerako obukugu',
+    'Remove skill': 'Gyawo obukugu',
+    'Skill already added': 'Obukugu buno buliwo dda',
+    'Tap a skill to remove it.': 'Koona ku bukugu okubugyawo.',
+    'Could not update skills.': 'Tetwasobola kukyusa bukugu.',
     'Add Photos': 'Tongera Ebifaananyi',
     'No photos yet': 'Tebinabaawo bifaananyi',
     'Showcase your recent work to attract more clients':
@@ -331,7 +352,7 @@ export const translations = {
 
     // --- Onboarding / location ---
     'Welcome': 'Tukulamusizza',
-    'How would you like to use FundiLink?': 'Oyagala okuyita otya FundiLink?',
+    'How would you like to use Ufundi?': 'Oyagala okuyita otya Ufundi?',
     "I'm looking for skilled professionals to work with.":
       'Ndeeta abafundi abamannyi abe nja okukola nabo.',
     "I'd like to offer my services.": 'Nandyagadde okuwaayo emirimu gyange.',
@@ -373,6 +394,7 @@ export const translations = {
     'Please wait': 'Kkiriza nno',
     'You can resend after the cooldown period.': 'Osobola okuddamu okutuma nga amangu gaggwa.',
     'Dev mode': 'Enkola y\'okugezesa',
+    'Dev mode code': 'Kodi y\'enkola y\'okugezesa',
     'Your code is: {{code}}': 'Kodi yo ye: {{code}}',
     'Resend failed': 'Okuddamu okutuma kugwa bukyalimu',
     'Could not resend OTP.': 'Tekwasobola kuddamu kutuma OTP.',
@@ -390,8 +412,8 @@ export const translations = {
     'Required for phone sign-up. Skip if you\'re continuing with Google.':
       'Kyetaagibwa okwewandiisa n\'essimu. Kyambukirira bw\'okozesa Google.',
     'Phone number': 'Namba y\'essimu',
-    "We'll text you a one-time code, then ask for your email and date of birth.":
-      'Tujja kukutumira kodi eya bulijo, oluvannyuma tubeebuuze email yo n\'olunaku lw\'okuzaalibwa.',
+    "We'll text you a one-time code to confirm your number.":
+      'Tujja kukutumira kodi eya bulijo okukakasa namba yo.',
     'Continue with Phone Number': 'Weeyongerayo n\'Namba y\'Essimu',
     'OR': 'OBUDDE',
     'Google': 'Google',
@@ -556,6 +578,8 @@ export const translations = {
     'Could not decline': 'Tetuyinza kuviisa',
     'Dismiss': 'Ggobawo',
     'Set up your Fundi profile': 'Teekawo purayilo yo y\'omu Fundi',
+    'Almost there': 'Kosawo',
+    'You can update your profile anytime from your profile page.': 'Oyinza okukyusa pulofayilo yo wooto wooto okuva ku pulofayilo yo.',
     'Tell clients what you do best. You can update this later.':
       'Buuza abakozesa by\'oyinza okukola bulungi. Oyinza okubidamu oluvanyuma.',
     'Your skills': 'Obuyiiya bwo',
@@ -566,7 +590,7 @@ export const translations = {
     'Short bio (optional)': 'Endowooza entono (emu)',
     'Describe your expertise...': 'Weeyongere okweyiwa...',
     'Saving…': 'Okulokola…',
-    'Continue to dashboard ': 'Yongerayo mu dashboard ',
+    'Continue to verification': 'Yongerayo mu kkakasa',
     'Could not save profile': 'Tetuyinza okukuma purayilo',
     'Finish setting up': 'Maliriza okuteekawo',
     'We pulled your name and email from Google. Add your date of birth to finish.':
@@ -661,8 +685,8 @@ export const translations = {
     'UGX {{amount}} transferred successfully!': 'UGX {{amount}} zasindikiddwa!',
     'Transfer UGX {{amount}}': 'Sindika UGX {{amount}}',
     'RECIPIENT': 'OMUNTU GW\'OTUMA',
-    'Enter the phone number of the FundiLink user to send funds to.':
-      'Yingiza namba ya simu ya omukozesa wa FundiLink gw\'ojja okusindikirira ensimbi.',
+    'Enter the phone number of the Ufundi user to send funds to.':
+      'Yingiza namba ya simu ya omukozesa wa Ufundi gw\'ojja okusindikirira ensimbi.',
     'Deposits': 'Okuteeka',
     'Withdrawals': 'Okufulumiza',
     'Payments': 'Okusaasanya',
@@ -726,6 +750,7 @@ export const translations = {
     'Booking updates and messages will appear here.':
       'Ebikwata ku booking n\'obubaka bijja kuboneka wano.',
     'No notifications yet': 'Tewali kubulirira nakatya',
+    'Mark all read': 'Manya byonna by\'osomye',
     'Help & Support': 'Obuyambi n\'Okutaasa',
     'Quick Actions': 'Ebikolebwa Mu bwangu',
     'Search for help...': 'Noonya obuyambi...',
@@ -837,9 +862,9 @@ export const translations = {
 };
 
 export function interpolate(text, params) {
-  if (!params) return text;
+  if (!params) return String(text).replace(/\{\{(\w+)\}\}/g, '');
   return String(text).replace(/\{\{(\w+)\}\}/g, (_, key) =>
-    params[key] != null ? String(params[key]) : `{{${key}}}`
+    params[key] != null ? String(params[key]) : ''
   );
 }
 

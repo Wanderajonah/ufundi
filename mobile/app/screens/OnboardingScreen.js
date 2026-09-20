@@ -62,7 +62,7 @@ export default function OnboardingScreen({ onSelectRole }) {
         ]}
       >
         <Text style={styles.bodyTitle}>{t('Welcome')}</Text>
-        <Text style={styles.bodySub}>{t('How would you like to use FundiLink?')}</Text>
+        <Text style={styles.bodySub}>{t('How would you like to use Ufundi?')}</Text>
         <View style={styles.cardsRow}>
           <RoleCard
             icon="search-outline"

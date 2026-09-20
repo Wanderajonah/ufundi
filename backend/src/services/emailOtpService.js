@@ -20,7 +20,7 @@ const generateCode = () => String(Math.floor(100000 + Math.random() * 900000));
 
 const sendEmail = async ({ to, code }) => {
   if (isDevMode()) {
-    console.log(`[FundiLink DEV EMAIL OTP] ${to}: ${code}`);
+    console.log(`[Ufundi DEV EMAIL OTP] ${to}: ${code}`);
     return;
   }
 
@@ -39,8 +39,8 @@ const sendEmail = async ({ to, code }) => {
     body: JSON.stringify({
       from: process.env.EMAIL_OTP_FROM,
       to: [to],
-      subject: "Your FundiLink sign-in code",
-      text: `Your FundiLink sign-in code is ${code}. It expires in 10 minutes. Do not share this code.`,
+      subject: "Your Ufundi sign-in code",
+      text: `Your Ufundi sign-in code is ${code}. It expires in 10 minutes. Do not share this code.`,
     }),
   });
 

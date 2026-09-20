@@ -10,7 +10,6 @@ const {
   normalizePhone: normalizeUgandaPhone,
 } = require("../services/otpService");
 const { issueEmailOtp, verifyEmailOtp } = require("../services/emailOtpService");
-const { normalizePhone } = require("../services/egoSms");
 
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
@@ -26,7 +25,7 @@ const googleClientIds = () => (
 
 const normalizeRole = (role) => (role === "client" ? "customer" : role);
 
-const buildFullName = (firstName, lastName, fallback = "FundiLink User") => {
+const buildFullName = (firstName, lastName, fallback = "Ufundi User") => {
   const full = [firstName, lastName].filter(Boolean).join(" ").trim();
   return full || fallback;
 };
@@ -104,7 +103,7 @@ const register = async (req, res, next) => {
 
     if (phone) {
       const existingPhone = await User.findOne({
-        phone: normalizePhone(phone),
+        phone: normalizeUgandaPhone(phone),
       });
       if (existingPhone)
         return res.status(400).json({ message: "Phone already in use" });
@@ -115,7 +114,7 @@ const register = async (req, res, next) => {
       firstName: firstName || fullName.split(" ")[0] || "",
       lastName: lastName || fullName.split(" ").slice(1).join(" ") || "",
       email: email || undefined,
-      phone: phone ? normalizePhone(phone) : undefined,
+      phone: phone ? normalizeUgandaPhone(phone) : undefined,
       password: await bcrypt.hash(crypto.randomBytes(24).toString("hex"), 10),
       role: normalizedRole,
       phoneVerified: Boolean(phone),
@@ -154,7 +153,7 @@ const sendOtp = async (req, res, next) => {
     }
 
     if (purpose === "login") {
-      const existing = await User.findOne({ phone: normalizePhone(phone) });
+      const existing = await User.findOne({ phone: normalizeUgandaPhone(phone) });
       if (!existing) {
         return res.status(404).json({
           message: "Account not found. Please create an account first.",
@@ -163,7 +162,7 @@ const sendOtp = async (req, res, next) => {
     }
 
     if (purpose === "register") {
-      const existing = await User.findOne({ phone: normalizePhone(phone) });
+      const existing = await User.findOne({ phone: normalizeUgandaPhone(phone) });
       if (existing) {
         return res
           .status(400)

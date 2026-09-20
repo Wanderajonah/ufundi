@@ -90,6 +90,19 @@ const reverseGeocode = async (lat, lng) => {
 /** ETA in minutes from distance (rough urban speed ~25 km/h) */
 const estimateEtaMinutes = (distanceKm) => Math.max(3, Math.round((distanceKm / 25) * 60));
 
+/** Strip HTML from a Directions API instruction (e.g. "<b>Head north</b> on X"). */
+const cleanInstruction = (html) =>
+  String(html || "")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+
 /** Decode a Google encoded polyline into [{lat,lng}] points. */
 const decodePolyline = (encoded) => {
   const points = [];
@@ -151,10 +164,24 @@ const fetchDrivingRoute = async (from, to) => {
       ? decodePolyline(route.overview_polyline.points)
       : [];
 
+    const steps = (leg?.steps || []).map((step) => ({
+      instruction: cleanInstruction(step.html_instructions),
+      maneuver: step.maneuver || null,
+      distanceMeters: step.distance?.value ?? null,
+      durationSeconds: step.duration?.value ?? null,
+      start: step.start_location
+        ? { lat: step.start_location.lat, lng: step.start_location.lng }
+        : null,
+      end: step.end_location
+        ? { lat: step.end_location.lat, lng: step.end_location.lng }
+        : null,
+    }));
+
     return {
       distanceKm,
       etaMinutes,
       polyline,
+      steps,
       source: "google-directions",
     };
   } catch {

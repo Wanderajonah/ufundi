@@ -1,6 +1,6 @@
-# FundiLink
+# Ufundi
 
-FundiLink is a full-stack mobile prototype that connects customers with local artisans (Fundis) such as plumbers, electricians, carpenters, and masons.
+Ufundi is a full-stack mobile prototype that connects customers with local artisans (Fundis) such as plumbers, electricians, carpenters, and masons.
 
 ## Tech Stack
 
@@ -14,7 +14,7 @@ FundiLink is a full-stack mobile prototype that connects customers with local ar
 ## Project Structure
 
 ```text
-fundlink/
+ufundi/
   backend/
     src/
       config/
@@ -38,7 +38,7 @@ fundlink/
    - Copy `backend/.env.example` to `backend/.env`
    - Add EgoSMS credentials (`COMMS_USERNAME`, `COMMS_API_KEY`, `COMMS_SENDER_ID`)
    - For local dev without SMS, set `COMMS_DEV_MODE=true` (OTP is printed in the server console)
-   - To enable email OTP login, create a [Resend](https://resend.com) API key and add `RESEND_API_KEY` plus `EMAIL_OTP_FROM` (for example, `FundiLink <login@your-verified-domain.com>`). Resend requires the sending domain to be verified.
+   - To enable email OTP login, create a [Resend](https://resend.com) API key and add `RESEND_API_KEY` plus `EMAIL_OTP_FROM` (for example, `Ufundi <login@your-verified-domain.com>`). Resend requires the sending domain to be verified.
 3. Install and run:
 
 ```bash
@@ -71,7 +71,7 @@ Enable **Maps SDK for Android/iOS** and **Geocoding API** in Google Cloud Consol
 
 ## Publish on Expo (app + backend)
 
-`npx eas` only works inside **`mobile/`** (or use `npm run mobile:build` from the repo root). Running it from `~/Projects/fundlink` causes `could not determine executable to run`.
+`npx eas` only works inside **`mobile/`** (or use `npm run mobile:build` from the repo root). Running it from `~/Projects/ufundi` causes `could not determine executable to run`.
 
 ### 1. Backend must be reachable from phones
 
@@ -79,7 +79,7 @@ A built APK **cannot** call `localhost` or your LAN IP unless the phone is on th
 
 1. Deploy `backend/` to a host with HTTPS (VPS, Railway, Render, etc.).
 2. Set `MONGO_URI`, `JWT_SECRET`, and EgoSMS vars on that server.
-3. Note the public API base, e.g. `https://fundilink-api.example.com/api`.
+3. Note the public API base, e.g. `https://ufundi-api.example.com/api`.
 
 ### 2. Point the mobile app at that API
 

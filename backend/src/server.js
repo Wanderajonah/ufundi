@@ -30,8 +30,8 @@ connectDB().then(async () => {
   await ensureStorageBuckets();
   const bcrypt = require("bcryptjs");
   const User = require("./models/User");
-  const name = process.env.ADMIN_NAME || "FundiLink Admin";
-  const email = (process.env.ADMIN_EMAIL || "admin@fundilink.ug").toLowerCase();
+  const name = process.env.ADMIN_NAME || "Ufundi Admin";
+  const email = (process.env.ADMIN_EMAIL || "admin@ufundi.ug").toLowerCase();
   const password = process.env.ADMIN_PASSWORD || "password123";
   User.findOneAndUpdate(
     { email },
@@ -53,7 +53,7 @@ app.get("/api/health", (req, res) => {
   const { isConfigured } = require("./services/supportBotService");
   res.json({
     status: "ok",
-    service: "FundiLink API",
+    service: "Ufundi API",
     features: {
       auth: true,
       otp: true,

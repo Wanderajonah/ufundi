@@ -79,7 +79,7 @@ const SettingsPage = () => {
           <h2 className="text-white font-bold text-base mb-4">Admin Profile</h2>
           <div className="space-y-4">
             <div><label className="block text-muted text-xs font-bold uppercase tracking-wider mb-2">Name</label><input value={admin?.name || 'Admin User'} readOnly className="w-full bg-bg-raised border border-border rounded-input px-4 py-3 text-white text-sm outline-none focus:border-primary transition-colors duration-200 placeholder:text-muted" /></div>
-            <div><label className="block text-muted text-xs font-bold uppercase tracking-wider mb-2">Email</label><input value={admin?.email || 'admin@fundilink.ug'} readOnly className="w-full bg-bg-raised border border-border rounded-input px-4 py-3 text-white text-sm outline-none focus:border-primary transition-colors duration-200 placeholder:text-muted" /></div>
+            <div><label className="block text-muted text-xs font-bold uppercase tracking-wider mb-2">Email</label><input value={admin?.email || 'admin@ufundi.ug'} readOnly className="w-full bg-bg-raised border border-border rounded-input px-4 py-3 text-white text-sm outline-none focus:border-primary transition-colors duration-200 placeholder:text-muted" /></div>
           </div>
         </div>
         <div className="bg-bg-card border border-border rounded-card p-5 shadow-card">

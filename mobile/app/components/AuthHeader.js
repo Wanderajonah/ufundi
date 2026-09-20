@@ -1,20 +1,18 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import BrandLockup from './BrandLockup';
 import theme from '../theme';
 import { useLanguage } from '../i18n/LanguageContext';
 
 /**
  * Consistent top-of-screen treatment for every auth flow:
- * optional back button, centered brand lockup, then title + subtitle.
+ * optional back button, then title + subtitle.
  */
 export default function AuthHeader({
   onBack,
   title,
   subtitle,
   right,
-  brandSize = 150,
 }) {
   const { t } = useLanguage();
   return (
@@ -34,8 +32,6 @@ export default function AuthHeader({
         {right ? <View style={styles.rightSlot}>{right}</View> : <View />}
       </View>
 
-      <BrandLockup size={brandSize} />
-
       {title ? <Text style={styles.title}>{t(title)}</Text> : null}
       {subtitle ? (
         <>
@@ -52,7 +48,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
   },
   backBtn: {
     width: 40,
@@ -72,11 +67,11 @@ const styles = StyleSheet.create({
 
   title: {
     color: theme.colors.white,
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: '800',
     letterSpacing: -0.6,
     textAlign: 'center',
-    marginTop: 20,
+    marginTop: 28,
   },
   titleAccent: {
     width: 26,
@@ -84,7 +79,7 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     backgroundColor: theme.colors.accent,
     alignSelf: 'center',
-    marginTop: 10,
+    marginTop: 12,
   },
   subtitle: {
     color: theme.colors.muted,
@@ -92,7 +87,7 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     letterSpacing: 0.2,
     textAlign: 'center',
-    marginTop: 8,
+    marginTop: 10,
     paddingHorizontal: 12,
   },
 });

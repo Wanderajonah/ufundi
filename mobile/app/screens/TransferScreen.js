@@ -78,7 +78,7 @@ export default function TransferScreen({ onNavigate, userRole = 'customer' }) {
           placeholderTextColor={isFundi ? fc.textSubtle : theme.colors.mutedDark}
         />
       </View>
-      <Text style={[styles.hint, isFundi && styles.fundiHint]}>{t('Enter the phone number of the FundiLink user to send funds to.')}</Text>
+      <Text style={[styles.hint, isFundi && styles.fundiHint]}>{t('Enter the phone number of the Ufundi user to send funds to.')}</Text>
 
       <Text style={[styles.section, isFundi && styles.fundiSection]}>{t('AMOUNT')}</Text>
       <View style={[styles.amountInput, isFundi && styles.fundiInputCard]}>
