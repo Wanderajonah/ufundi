@@ -19,8 +19,58 @@ const {
   markRead,
   markAllRead,
 } = require("../controllers/notificationController");
+const Referee = require("../models/Referee");
 
 const router = express.Router();
+
+// Referee CRUD
+router.get("/referees", protect, async (req, res, next) => {
+  try {
+    const referees = await Referee.find({ userId: req.user._id });
+    return res.json(referees);
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.post("/referees", protect, async (req, res, next) => {
+  try {
+    const count = await Referee.countDocuments({ userId: req.user._id });
+    if (count >= 5) {
+      return res.status(400).json({ message: "Maximum 5 referees allowed" });
+    }
+    const { name, relationship, phoneNumber, email } = req.body;
+    if (!name || !relationship || !phoneNumber) {
+      return res.status(400).json({ message: "Name, relationship, and phone number are required" });
+    }
+    const referee = await Referee.create({
+      userId: req.user._id,
+      name,
+      relationship,
+      phoneNumber,
+      email: email || "",
+    });
+    return res.status(201).json(referee);
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.delete("/referees/:id", protect, async (req, res, next) => {
+  try {
+    const referee = await Referee.findById(req.params.id);
+    if (!referee) {
+      return res.status(404).json({ message: "Referee not found" });
+    }
+    if (String(referee.userId) !== String(req.user._id)) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+    await referee.delete();
+    return res.json({ message: "Referee removed" });
+  } catch (error) {
+    return next(error);
+  }
+});
 
 router.get("/notifications", protect, getNotifications);
 router.get("/notifications/unread-count", protect, getUnreadCount);

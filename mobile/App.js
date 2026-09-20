@@ -33,6 +33,7 @@ import NotificationsScreen from "./app/screens/NotificationsScreen";
 import ProfileScreen from "./app/screens/ProfileScreen";
 import EditProfileScreen from "./app/screens/EditProfileScreen";
 import VerificationScreen from "./app/screens/VerificationScreen";
+import RefereeScreen from "./app/screens/RefereeScreen";
 import SettingsScreen from "./app/screens/SettingsScreen";
 import RolePickerScreen from "./app/screens/RolePickerScreen";
 import PaymentMethodsScreen from "./app/screens/PaymentMethodsScreen";
@@ -335,6 +336,7 @@ function AppContent() {
       setVerificationFromSetup(false);
       return setScreen("verification");
     }
+    if (key === "referees") return setScreen("referees");
     if (key === "createAccount") return setScreen("createAccount");
     if (key === "signIn") {
       if (!selectedRole) {
@@ -1095,6 +1097,10 @@ function AppContent() {
         }
       />
     );
+  }
+
+  if (screen === "referees") {
+    return <RefereeScreen onNavigate={handleNavigate} userRole={userRole} />;
   }
 
   if (screen === "wallet") {

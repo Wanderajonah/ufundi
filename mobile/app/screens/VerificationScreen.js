@@ -269,6 +269,23 @@ export default function VerificationScreen({ onNavigate, onBack }) {
               {t('Only verified fundis are shown to clients and can access client jobs.')}
             </Text>
           </View>
+
+          {/* References Section */}
+          <TouchableOpacity
+            style={styles.referencesBtn}
+            onPress={() => onNavigate("referees")}
+          >
+            <View style={styles.referencesIcon}>
+              <Ionicons name="people-outline" size={20} color={C.amberDark} />
+            </View>
+            <View style={styles.referencesTextWrap}>
+              <Text style={styles.referencesTitle}>{t('References')}</Text>
+              <Text style={styles.referencesSub}>
+                {t('Add referees who can vouch for your work')}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={C.muted} />
+          </TouchableOpacity>
         </ScrollView>
         )}
         <View style={{ height: insets.bottom, backgroundColor: theme.colors.black }} />
@@ -430,4 +447,30 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   infoText: { color: C.muted, fontSize: 13, lineHeight: 18, flex: 1, marginLeft: 8 },
+
+  referencesBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: C.card,
+    borderRadius: 12,
+    padding: 14,
+    marginTop: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  referencesIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: C.amber,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  referencesTextWrap: { flex: 1 },
+  referencesTitle: { fontSize: 14, fontWeight: '600', color: C.text },
+  referencesSub: { fontSize: 12, color: C.muted, marginTop: 2 },
 });

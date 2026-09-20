@@ -709,6 +709,10 @@ const deleteUserCascade = async (userId) => {
   await Wallet.deleteMany({ userId: id });
   await FundiProfile.deleteMany({ userId: id });
   await AdminNotification.deleteMany({ relatedId: id });
+
+  // Clean up referees
+  const Referee = require("../models/Referee");
+  await Referee.deleteMany({ userId: id });
 };
 
 const deleteFundi = async (req, res, next) => {

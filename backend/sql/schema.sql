@@ -343,6 +343,23 @@ alter table platform_settings     enable row level security;
 alter table admin_notifications   enable row level security;
 alter table notifications         enable row level security;
 
+-- ============================================================
+-- referees
+-- ============================================================
+create table if not exists referees (
+  id              text primary key default gen_random_uuid()::text,
+  "userId"        text not null references users (id),
+  name            text not null,
+  relationship    text not null,
+  "phoneNumber"   text not null,
+  email           text,
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now()
+);
+
+create index if not exists referees_user_idx on referees ("userId");
+alter table referees enable row level security;
+
 -- Optional cleanup jobs (requires the pg_cron extension):
 --   create extension if not exists pg_cron;
 --   select cron.schedule('expire-old-otps', '0 * * * *',
