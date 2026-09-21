@@ -24,7 +24,7 @@ const useGoogleMaps = mapProvider === 'google' && !!googleMapsApiKey;
 module.exports = {
   expo: {
     name: 'Ufundi',
-    slug: 'ufundi',
+    slug: 'fundilink',
     version: '1.0.1',
     orientation: 'portrait',
     userInterfaceStyle: 'dark',
