@@ -108,7 +108,7 @@ export default function NotificationsScreen({ onNavigate, userRole = 'customer' 
             style={[styles.cardBody, isFundi && styles.cardBodyFundi, unread && { fontWeight: '700' }]}
             numberOfLines={2}
           >
-            {item.body}
+            {typeof item.body === 'object' ? JSON.stringify(item.body) : item.body}
           </Text>
         </View>
         <Text style={[styles.time, isFundi && styles.timeFundi]}>{timeLabel(item.createdAt || item.created_at)}</Text>

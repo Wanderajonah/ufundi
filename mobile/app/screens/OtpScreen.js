@@ -38,7 +38,7 @@ export default function OtpScreen({
   const [seconds, setSeconds] = useState(expiresIn);
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
-  const [devCode, setDevCode] = useState(initialDevCode || null);
+  const [devCode, setDevCode] = useState(__DEV__ && initialDevCode ? initialDevCode : null);
   const inputRefs = useRef([]);
   const hiddenRef = useRef(null);
   const { t } = useLanguage();
@@ -146,7 +146,7 @@ export default function OtpScreen({
         ? await onRequestResend()
         : await sendOtp(phoneRaw || phone, purpose);
       setSeconds(data.expiresIn || 600);
-      if (data.devCode) {
+      if (__DEV__ && data.devCode) {
         setDevCode(data.devCode);
       }
       setDigits(emptyDigits(otpLength));

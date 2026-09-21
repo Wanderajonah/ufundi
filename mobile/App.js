@@ -815,7 +815,7 @@ function AppContent() {
             setOtpPhone(normalized);
             const { data: otpRes } = await sendOtp(normalized, "register");
             setOtpExpiresIn(otpRes.expiresIn || 600);
-            if (otpRes.devCode) setOtpDevCode(otpRes.devCode);
+            if (__DEV__ && otpRes.devCode) setOtpDevCode(otpRes.devCode);
             setScreen("otp");
           } catch (error) {
             Alert.alert("Could not send OTP", getErrorMessage(error));
@@ -860,7 +860,7 @@ function AppContent() {
             setOtpPhone(normalized);
             const { data } = await sendOtp(normalized, "login");
             setOtpExpiresIn(data.expiresIn || 600);
-            if (data.devCode) setOtpDevCode(data.devCode);
+            if (__DEV__ && data.devCode) setOtpDevCode(data.devCode);
             setScreen("otp");
           } catch (error) {
             Alert.alert("Could not send OTP", getErrorMessage(error));
@@ -874,7 +874,7 @@ function AppContent() {
             const { data } = await sendGoogleEmailLoginOtp(idToken);
             setOtpEmail(data.email);
             setOtpExpiresIn(data.expiresIn || 600);
-            if (data.devCode) setOtpDevCode(data.devCode);
+            if (__DEV__ && data.devCode) setOtpDevCode(data.devCode);
             setScreen("otp");
           } catch (error) {
             Alert.alert("Could not send email code", getErrorMessage(error));
@@ -916,7 +916,7 @@ function AppContent() {
         }
         onResent={(data) => {
           setOtpExpiresIn(data.expiresIn || 600);
-          if (data.devCode) setOtpDevCode(data.devCode);
+          if (__DEV__ && data.devCode) setOtpDevCode(data.devCode);
         }}
         onRequestResend={otpChannel === "email" ? () => sendGoogleEmailLoginOtp(googleOtpToken) : undefined}
         onVerify={async (code) => {
