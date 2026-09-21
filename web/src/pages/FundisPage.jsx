@@ -263,9 +263,9 @@ const FundisPage = () => {
             </div>
             <div className="bg-bg-raised rounded-input p-4"><h3 className="text-white font-bold mb-2">About</h3><p className="text-muted text-sm">{selected.about || selected.bio || 'No profile description provided.'}</p></div>
             <div className="flex flex-wrap gap-2">{(selected.skills || []).map((skill) => <span key={skill} className="bg-primary/20 text-primary text-xs font-bold px-3 py-1 rounded-pill">{skill}</span>)}</div>
-            {selected.verificationDocs.length > 0 && (
-              <div className="bg-bg-raised rounded-input p-4">
-                <h3 className="text-white font-bold mb-3">Verification Documents</h3>
+            <div className="bg-bg-raised rounded-input p-4">
+              <h3 className="text-white font-bold mb-3">Verification Documents</h3>
+              {selected.verificationDocs.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {selected.verificationDocs.map((doc, i) => {
                     const docUrl = doc.startsWith('http') ? doc : `${API_BASE}${doc}`;
@@ -293,12 +293,13 @@ const FundisPage = () => {
                     </a>
                     )})}
                 </div>
-              </div>
-            )}
-            <VerdictSection fundi={selected} />
-            {referees.length > 0 && (
-              <div className="bg-bg-raised rounded-input p-4">
-                <h3 className="text-white font-bold mb-3">References ({referees.length})</h3>
+              ) : (
+                <p className="text-muted text-sm">No verification documents submitted.</p>
+              )}
+            </div>
+            <div className="bg-bg-raised rounded-input p-4">
+              <h3 className="text-white font-bold mb-3">References ({referees.length})</h3>
+              {referees.length > 0 ? (
                 <div className="space-y-2">
                   {referees.map((ref) => (
                     <div key={ref._id} className="flex items-center gap-3 bg-bg-primary border border-border rounded-input px-4 py-3">
@@ -310,8 +311,11 @@ const FundisPage = () => {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <p className="text-muted text-sm">No referees added yet.</p>
+              )}
+            </div>
+            <VerdictSection fundi={selected} />
           </div>
         )}
       </Modal>
