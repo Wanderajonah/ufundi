@@ -91,6 +91,8 @@ export default function FundiDashboardScreen({
   userId,
   fundiEnabled,
   onSwitchToClientMode,
+  showRefereeBanner,
+  onDismissRefereeBanner,
 }) {
   const { t } = useLanguage();
   const { address } = useLocation();
@@ -368,6 +370,18 @@ export default function FundiDashboardScreen({
             <Ionicons name="chevron-forward" size={16} color={theme.colors.textMuted} />
           </TouchableOpacity>
         ) : null}
+
+        {showRefereeBanner && (
+          <View style={styles.refereeBanner}>
+            <Ionicons name="checkmark-circle" size={20} color="#22C55E" />
+            <Text style={styles.refereeBannerText}>
+              References submitted. Once verified by our admins, your profile will be visible to clients.
+            </Text>
+            <TouchableOpacity onPress={onDismissRefereeBanner} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Ionicons name="close" size={18} color={theme.colors.textMuted} />
+            </TouchableOpacity>
+          </View>
+        )}
 
         <View style={styles.statusCard}>
           <View style={styles.statusLeft}>
@@ -739,6 +753,22 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
     fontSize: 11,
     marginTop: 2,
+  },
+  refereeBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E4F3E8',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 12,
+    gap: 10,
+  },
+  refereeBannerText: {
+    flex: 1,
+    color: '#177245',
+    fontSize: 13,
+    lineHeight: 18,
   },
   statusCard: {
     flexDirection: 'row',

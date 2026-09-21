@@ -1,8 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { View, StatusBar, Alert, BackHandler, Platform } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import * as NavigationBar from "expo-navigation-bar";
-import * as SystemUI from "expo-system-ui";
 import theme from "./app/theme";
 
 import SplashScreen from "./app/screens/SplashScreen";
@@ -145,6 +143,7 @@ function AppContent() {
   const [verificationFromSetup, setVerificationFromSetup] = useState(false);
   const [clientBookingDraft, setClientBookingDraft] = useState(null);
   const [chatTargetUserId, setChatTargetUserId] = useState(null);
+  const [showRefereeBanner, setShowRefereeBanner] = useState(false);
 
   // push current screen into history and navigate
   const pushAndNavigate = (next) => {
@@ -298,18 +297,17 @@ function AppContent() {
   const handleNavigate = (key, params) => {
     // Pure fundis cannot access client-only screens
     if (userRole === "fundi" && !fundiEnabled && CLIENT_ONLY_SCREENS.has(key)) {
-      Alert.alert(
-        "Client feature",
-        "Browsing artisans and booking jobs are for clients. Use your Fundi dashboard and Jobs tab.",
-      );
-      return;
+      return goHome();
     }
     // Customers without fundi mode cannot access fundi dashboard
     if (userRole === "customer" && !fundiEnabled && key === "fundiDashboard") {
       return setScreen("home");
     }
 
-    if (key === "home") return goHome();
+    if (key === "home") {
+      if (params?.showVerificationBanner) setShowRefereeBanner(true);
+      return goHome();
+    }
     if (key === "fundiDashboard") return pushAndNavigate("fundiDashboard");
     if (key === "browse") {
       if (params?.category) setBrowseCategory(params.category);
@@ -467,16 +465,8 @@ function AppContent() {
   }, [userRole]);
 
   // Keep the Android system navigation bar in sync with the dark theme.
-  // The app runs edge-to-edge, so the nav bar is transparent and Android paints
-  // the app's background behind it. The background color is handled natively via
   // Edge-to-edge is mandatory in SDK 57/Android 16. The OS owns the nav bar
-  // color; we only control button contrast via setStyle.
-  useEffect(() => {
-    if (Platform.OS === "android") {
-      try { NavigationBar.setStyle?.("light"); } catch {}
-      SystemUI.setBackgroundColorAsync?.("#000000")?.catch?.(() => {});
-    }
-  }, []);
+  // color; no manual calls needed.
 
   // Handle Android hardware back button by popping history
   useEffect(() => {
@@ -1008,7 +998,7 @@ function AppContent() {
   if (screen === "home") {
     if (userRole === "fundi") {
       return tabLayout(
-        bookingWrap(<FundiDashboardScreen userName={userName} {...tabProps} />),
+      bookingWrap(<FundiDashboardScreen userName={userName} showRefereeBanner={showRefereeBanner} onDismissRefereeBanner={() => setShowRefereeBanner(false)} {...tabProps} />),
         "home",
       );
     }

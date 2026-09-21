@@ -44,6 +44,7 @@ export const getFundis = (params) => api.get('/admin/fundis', { params });
 export const verifyFundi = (id, notes) => api.patch(`/admin/fundis/${id}/verify`, { status: 'verified', notes });
 export const rejectFundi = (id, notes) => api.patch(`/admin/fundis/${id}/verify`, { status: 'rejected', notes });
 export const deleteFundi = (id) => api.delete(`/admin/fundis/${id}`);
+export const getFundiReferees = (id) => api.get(`/admin/fundis/${id}/referees`);
 
 export const getClients = (params) => api.get('/admin/users', { params });
 export const suspendClient = (id) => api.patch(`/admin/users/${id}/status`, { status: 'suspended' });

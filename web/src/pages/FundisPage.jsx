@@ -3,7 +3,7 @@ import { RiAddLine, RiDeleteBinLine, RiEyeLine, RiShieldCheckLine, RiCloseCircle
 import Badge from '../components/Badge';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
-import { API_BASE, createUser, deleteFundi, getFundis, rejectFundi, verifyFundi } from '../services/api';
+import { API_BASE, createUser, deleteFundi, getFundis, getFundiReferees, rejectFundi, verifyFundi } from '../services/api';
 import { formatDate, getInitials, readList, toastMessage } from '../utils/format';
 
 const FundisPage = () => {
@@ -18,6 +18,7 @@ const FundisPage = () => {
   const [form, setForm] = useState({ name: '', email: '', phone: '' });
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
+  const [referees, setReferees] = useState([]);
 
   const openAddModal = () => {
     setFormError('');
@@ -117,6 +118,20 @@ const FundisPage = () => {
     rejected: fundis.filter((f) => f.verificationStatus === 'rejected').length,
   };
 
+  const loadReferees = async (fundiId) => {
+    try {
+      const res = await getFundiReferees(fundiId);
+      setReferees(Array.isArray(res.data) ? res.data : []);
+    } catch {
+      setReferees([]);
+    }
+  };
+
+  const handleSelect = (fundi) => {
+    setSelected(fundi);
+    loadReferees(fundi._id);
+  };
+
   const columns = [
     { key: 'index', header: '#', render: (_, index) => index + 1 },
     {
@@ -151,7 +166,7 @@ const FundisPage = () => {
       header: 'Actions',
       render: (fundi) => (
         <div className="flex items-center gap-1">
-          <button onClick={() => setSelected(fundi)} className="p-1.5 text-muted hover:text-info transition-colors" aria-label="View fundi"><RiEyeLine /></button>
+          <button onClick={() => handleSelect(fundi)} className="p-1.5 text-muted hover:text-info transition-colors" aria-label="View fundi"><RiEyeLine /></button>
           <button onClick={() => handleDelete(fundi)} className="p-1.5 text-muted hover:text-danger transition-colors" aria-label="Delete fundi"><RiDeleteBinLine /></button>
         </div>
       ),
@@ -281,6 +296,22 @@ const FundisPage = () => {
               </div>
             )}
             <VerdictSection fundi={selected} />
+            {referees.length > 0 && (
+              <div className="bg-bg-raised rounded-input p-4">
+                <h3 className="text-white font-bold mb-3">References ({referees.length})</h3>
+                <div className="space-y-2">
+                  {referees.map((ref) => (
+                    <div key={ref._id} className="flex items-center gap-3 bg-bg-primary border border-border rounded-input px-4 py-3">
+                      <div className="w-8 h-8 rounded-full bg-primary/20 text-primary font-bold text-xs flex items-center justify-center">{(ref.name || '?')[0].toUpperCase()}</div>
+                      <div className="flex-1">
+                        <div className="text-white text-sm font-semibold">{ref.name}</div>
+                        <div className="text-muted text-xs">{ref.relationship} · {ref.phoneNumber}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </Modal>

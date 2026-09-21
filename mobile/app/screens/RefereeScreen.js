@@ -66,9 +66,9 @@ export default function RefereeScreen({ onNavigate, userRole }) {
   const loadReferees = useCallback(async () => {
     try {
       const { data } = await api.get("/users/referees");
-      setReferees(data);
-    } catch (e) {
-      console.warn("Failed to load referees:", e.message);
+      setReferees(Array.isArray(data) ? data : []);
+    } catch {
+      setReferees([]);
     } finally {
       setLoading(false);
     }
@@ -131,7 +131,7 @@ export default function RefereeScreen({ onNavigate, userRole }) {
   };
 
   const handleFinish = () => {
-    if (onNavigate) onNavigate("verification");
+    onNavigate?.("home", { showVerificationBanner: true });
   };
 
   const isLight = userRole === "fundi";
@@ -232,11 +232,10 @@ export default function RefereeScreen({ onNavigate, userRole }) {
 
         {/* Finish Button */}
         <TouchableOpacity
-          style={[styles.finishBtn, !canFinish && styles.finishBtnDisabled]}
+          style={styles.finishBtn}
           onPress={handleFinish}
-          disabled={!canFinish}
         >
-          <Text style={[styles.finishText, !canFinish && styles.finishTextDisabled]}>
+          <Text style={styles.finishText}>
             Finish
           </Text>
         </TouchableOpacity>
@@ -512,15 +511,14 @@ const styles = StyleSheet.create({
   // Finish
   finishBtn: {
     backgroundColor: C.dashboard,
-    borderRadius: 14,
-    height: 50,
+    borderRadius: theme.buttons.radius.lg,
+    height: 48,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 24,
-    marginHorizontal: 16,
+    marginTop: 20,
   },
   finishBtnDisabled: { backgroundColor: C.pillGray },
-  finishText: { fontSize: 16, fontWeight: "700", color: "#FFFFFF" },
+  finishText: { fontSize: 15, fontWeight: "700", color: C.card },
   finishTextDisabled: { color: C.muted },
 
   // Info

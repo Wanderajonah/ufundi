@@ -42,6 +42,15 @@ router.get("/users", getUsers);
 router.get("/users/:id", getUserById);
 router.patch("/users/:id/status", updateUserStatus);
 router.get("/fundis", getFundis);
+router.get("/fundis/:id/referees", async (req, res, next) => {
+  try {
+    const Referee = require("../models/Referee");
+    const referees = await Referee.find({ userId: req.params.id });
+    return res.json(referees);
+  } catch (error) {
+    return next(error);
+  }
+});
 router.patch("/fundis/:id/verify", verifyFundi);
 router.delete("/fundis/:id", deleteFundi);
 router.delete("/users/:id", deleteUser);

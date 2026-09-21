@@ -1,7 +1,5 @@
 /** Expo config — loads Google Maps API key from environment */
 
-const withAndroidNavigationBarTheme = require('./plugins/withAndroidNavigationBarTheme');
-
 function googleIosUrlScheme() {
   if (process.env.EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME) {
     return process.env.EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME;
@@ -78,14 +76,6 @@ module.exports = {
       ...(iosUrlScheme
         ? [['@react-native-google-signin/google-signin', { iosUrlScheme }]]
         : []),
-      [
-        'expo-navigation-bar',
-        {
-          backgroundColor: '#000000',
-          style: 'light',
-        },
-      ],
-      './plugins/withAndroidNavigationBarTheme',
     ],
     extra: {
       eas: {
