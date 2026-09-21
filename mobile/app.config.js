@@ -29,7 +29,8 @@ module.exports = {
     orientation: 'portrait',
     userInterfaceStyle: 'dark',
     scheme: 'ufundi',
-    icon: './assets/icon.png',
+    // A white app icon surface keeps the supplied logo legible on every launcher.
+    icon: './assets/app-icon.png',
     assetBundlePatterns: ['**/*'],
     runtimeVersion: '1.0.1',
     ios: {
@@ -45,8 +46,8 @@ module.exports = {
         ? { config: { googleMaps: { apiKey: googleMapsApiKey } } }
         : {}),
       adaptiveIcon: {
-        foregroundImage: './assets/splash-icon.png',
-        backgroundColor: '#000000',
+        foregroundImage: './assets/adaptive-icon-foreground.png',
+        backgroundColor: '#FFFFFF',
       },
       permissions: ['ACCESS_FINE_LOCATION', 'ACCESS_COARSE_LOCATION'],
       softwareKeyboardLayoutMode: 'resize',
@@ -60,6 +61,15 @@ module.exports = {
       ],
     },
     plugins: [
+      [
+        'expo-splash-screen',
+        {
+          image: './assets/splash-logo.png',
+          imageWidth: 200,
+          resizeMode: 'contain',
+          backgroundColor: '#000000',
+        },
+      ],
       [
         'expo-location',
         {
